@@ -1,13 +1,19 @@
 #ifndef INC_4_COMPUTER_H
 #define INC_4_COMPUTER_H
 
-//#include <cstddef>
+#include <cstddef>
 #include <array>
-#include <iostream>
+//#include <iostream>
 #include <cassert>
 #include <type_traits>
 
 using num_id_t = unsigned long long;
+
+template <size_t n, typename T>
+using memory_t = std::array<T, n>;
+
+template <size_t n>
+using vars_t = std::array<num_id_t, n>;
 
 // mapa identyfikatorów na miejsca w pamięci
 
@@ -56,12 +62,14 @@ struct ct_map<kv<k, v>, rest...> {
 
 // TMPAsm Elements
 
-constexpr num_id_t Id(const char id[7]) {
+constexpr num_id_t Id(const char* id) {
     num_id_t num_id = 0ULL;
     unsigned i = 0;
-    assert(id[0] != '\0');
+    assert(id[0] != '\0' && ((id[0] >= '0' && id[0] <= '9') ||
+           (id[0] >= 'A' && id[0] <= 'Z') || (id[0] >= 'a' && id[0] <= 'z')));
     while (id[i] != '\0') {
-        num_id += ((num_id_t)(unsigned char) std::toupper(id[i])) << (8U * i);
+        num_id += ((num_id_t)(unsigned char)(id[i] >= 'a' ? id[i] - ('a' - 'A') : id[i]))
+                << (8U * i);
         ++i;
         assert(i < 7);
     }
@@ -71,8 +79,9 @@ constexpr num_id_t Id(const char id[7]) {
 template <auto num>
 struct Num {
     template <size_t n, typename T>
-    static constexpr auto rval(const std::array<T, n>&) {
-        static_assert(std::is_integral<decltype(num)>::value);
+    static constexpr auto rval(const vars_t<n>&, const memory_t <n, T>&) {
+//        static_assert(std::is_integral<decltype(num)>::value); -> to zbędne, bo n jako parametr
+//                                                                    array załatwia sprawę
         return num;
     }
 };
@@ -80,41 +89,65 @@ struct Num {
 template <typename Addr>
 struct Mem {
     template <size_t n, typename T>
-    static constexpr auto* addr(std::array<T, n>& memory) {
+    static constexpr auto* addr(vars_t<n> vars, std::array<T, n>& memory) {
 //        static_assert(Addr::template rval<n, T>(memory) < n);
-        return &memory[Addr::template rval<n, T>(memory)];
+        return &memory[Addr::template rval<n, T>(vars, memory)];
     }
     template <size_t n, typename T>
-    static constexpr auto& rval(const std::array<T, n>& memory) {
-        return memory[Addr::template rval<n, T>(memory)];
+    static constexpr auto const& rval(vars_t<n> vars, const memory_t<n, T>& memory) {
+        return memory[Addr::template rval<n, T>(vars, memory)];
     }
 };
 
-template <num_id_t id>
+template <num_id_t num_id>
 struct Lea {
-    template<typename id_map>
-    static constexpr size_t rval() {
-        return id_map::template get<id>::val;
+    template<size_t n, typename T>
+    static constexpr size_t rval(const vars_t<n>& vars, const memory_t<n, T>&) {
+        for (size_t i = 0; i < n; ++i) {
+            if (vars[i] == num_id)
+                return i;
+        }
+        return 0;
+//        assert(false);
     }
 };
 
 // TMPAsm Instructions
 
+template <num_id_t id, typename Value>
+struct D {
+//    static constexpr bool declaration = true;
+    template <size_t n, typename T>
+    static constexpr void execute(vars_t<n>& vars,
+                                  memory_t<n, T>& memory) {
+        size_t i = 0;
+        while (i < n) {
+            if (vars[i] == 0) {
+                vars[i] = id;
+                memory[i] = Value::rval(vars, memory);
+                return;
+            }
+            ++i;
+        }
+        assert(false);
+    }
+};
+
 template <typename LValue, typename RValue>
 struct Mov {
     template <size_t n, typename T>
-    static constexpr void execute(std::array<T, n>& memory, bool&, bool&) {
-        *LValue::template addr<n, T>(memory) =
-                RValue::template rval<n, T>(memory);
+    static constexpr void execute(vars_t<n>& vars, memory_t<n, T>& memory, bool&, bool&) {
+        *LValue::template addr<n, T>(vars, memory) =
+                RValue::template rval<n, T>(vars, memory);
     }
 };
 
 template <typename LValue, typename RValue>
 struct Add {
     template <size_t n, typename T>
-    static constexpr void execute(std::array<T, n>& memory, bool& ZF, bool& SF) {
-        auto result = *LValue::template addr<n, T>(memory) +=
-                RValue::template rval<n, T>(memory);
+    static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool& SF) {
+        auto result = *LValue::template addr<n, T>(vars, memory) +=
+                RValue::template rval<n, T>(vars, memory);
         ZF = result == 0;
         SF = result < 0;
     }
@@ -123,9 +156,9 @@ struct Add {
 template <typename LValue, typename RValue>
 struct Sub {
     template <size_t n, typename T>
-    static constexpr void execute(std::array<T, n>& memory, bool& ZF, bool& SF) {
-        auto result = *LValue::template addr<n, T>(memory) -=
-                RValue::template rval<n, T>(memory);
+    static constexpr void execute(vars_t<n> vars, memory_t<n, T>& memory, bool& ZF, bool& SF) {
+        auto result = *LValue::template addr<n, T>(vars, memory) -=
+                RValue::template rval<n, T>(vars, memory);
         ZF = result == 0;
         SF = result < 0;
     }
@@ -134,8 +167,9 @@ struct Sub {
 template <typename LValue>
 struct Inc {
     template <size_t n, typename T>
-    static constexpr void execute(std::array<T, n>& memory, bool& ZF, bool& SF) {
-        auto result = ++*LValue::template addr<n, T>(memory);
+    static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory,
+                                  bool& ZF, bool& SF) {
+        auto result = ++*LValue::template addr<n, T>(vars, memory);
         ZF = result == 0;
         SF = result < 0;
     }
@@ -151,6 +185,36 @@ struct Dec {
     }
 };
 
+template <size_t n, typename T, typename T2>
+struct isDeclaration {
+    static constexpr bool result = false;
+};
+
+template<size_t n, typename T>
+using execute_t = void (vars_t<n>&, memory_t <n, T>&, bool&, bool&);
+
+template<size_t n, typename T>
+using declare_t = void (vars_t<n>&, memory_t <n, T>&);
+
+template <size_t n, typename T>
+struct isDeclaration <n, T, execute_t<n, T>> {
+static constexpr bool result = false;
+};
+
+template <size_t n, typename T>
+struct isDeclaration <n, T, declare_t<n, T>> {
+    static constexpr bool result = true;
+};
+
+
+/*
+template <typename Instr>
+struct isDeclaration2 {
+    using a = decltype(Instr::declaration);
+    static constexpr bool result = true;
+};
+*/
+
 
 template <typename...>
 struct Program;
@@ -158,38 +222,45 @@ struct Program;
 template <>
 struct Program <> {
     template <size_t n, typename T>
-    static constexpr void run(std::array<T, n>&, bool&, bool&) {}
+    static constexpr void declare(vars_t<n>&, memory_t<n, T>&) {}
+    template <size_t n, typename T, typename>
+    static constexpr void run(vars_t<n>&,
+                              memory_t<n, T>&, bool&, bool&) {}
 };
 
 template <typename Instr, typename ...rest>
 struct Program <Instr, rest...> {
     template <size_t n, typename T>
-    static constexpr void run(std::array<T, n>& memory, bool& ZF, bool& SF) {
-        Instr::template execute<n, T>(memory, ZF, SF);
-        Program<rest...>::template run<n, T>(memory, ZF, SF);
+    static constexpr void declare(vars_t<n>& vars, memory_t<n, T>& memory) {
+        constexpr bool declaration = isDeclaration<
+                n, T, decltype(Instr::template execute<n, T>)>::result;
+        if constexpr (declaration)
+            Instr::template execute<n, T>(vars, memory);
+        Program<rest...>::template declare<n, T>(vars, memory);
+    }
+
+    template <size_t n, typename T, typename P>
+    static constexpr void run(vars_t<n>& vars,
+            memory_t<n, T>& memory, bool& ZF, bool& SF) {
+        constexpr bool declaration = isDeclaration<
+                n, T, decltype(Instr::template execute<n, T>)>::result;
+        if constexpr (!declaration)
+            Instr::template execute<n, T>(vars, memory, ZF, SF);
+        Program<rest...>::template run<n, T>(vars, memory, ZF, SF);
     }
 };
-
-//template <typename Jump, typename ...rest>
-//struct Program <Jump, rest...> {
-//    template <auto& memory, bool& ZF, bool& SF>
-//    constexpr void run() {
-//        Jump::template jump<memory, ZF, SF>();
-//        Program<rest...>::run();
-//    }
-//};
 
 
 template <size_t n, typename T>
 struct Computer {
-    using memory_t = std::array<T, n>;
-
     template <typename P>
-    static constexpr memory_t boot() {
-        memory_t memory = {0};
+    static constexpr memory_t<n, T> boot() {
+        memory_t<n, T> memory {0};
+        vars_t<n> vars {0};
         bool ZF = false;
         bool SF = false;
-        P::template run<n, T>(memory, ZF, SF);
+        P::template declare<n, T>(vars, memory);
+        P::template run<n, T, P>(vars, memory, ZF, SF);
         return memory;
     }
 };
