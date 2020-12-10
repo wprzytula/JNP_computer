@@ -13,13 +13,12 @@ constexpr bool compare(std::array<T, N> const& arg1, std::array<T, N> const& arg
 using tmpasm_move = Program<
         Mov<Mem<Num<0>>, Num<42>>>;
 
-/*
 using tmpasm_jump = Program<
         Inc<Mem<Num<0>>>,
         Jmp<Id("stop")>,
         Inc<Mem<Num<0>>>,
         Label<Id("stop")>>;
-*/
+
 using tmpasm_data = Program<
         Inc<Mem<Lea<Id("a")>>>,
         D<Id("a"), Num<0>>,
@@ -60,7 +59,9 @@ using tmpasm_helloworld = Program<
         Mov<Mem<Mem<Num<10>>>, Num<'d'>>>;
 
 using my_prog = Program<
-        Mov<Mem<Num<4>>, Num<42>>>;
+        Mov<Mem<Num<4>>, Num<42>>//,
+        // D<Id("%"), Num<'a'>>>; --> to powinno się wywalać
+        >;
 
 int main() {
     /*auto arr = Computer<11, char>::boot<tmpasm_helloworld>();
@@ -72,12 +73,10 @@ int main() {
             std::array<int8_t, 1>({42})),
             "Failed [tmpasp_move].");
 
-/*
     static_assert(compare(
             Computer<1, int>::boot<tmpasm_jump>(),
             std::array<int, 1>({1})),
             "Failed [tmpasp_jump].");
-*/
 
     /*auto arr = Computer<4, uint32_t>::boot<tmpasm_data>();
     for (auto itr : arr)

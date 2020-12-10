@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <array>
-//#include <iostream>
 #include <cassert>
 #include <type_traits>
 
@@ -15,6 +14,8 @@ using memory_t = std::array<T, n>;
 template <size_t n>
 using vars_t = std::array<num_id_t, n>;
 
+
+/*
 // mapa identyfikatorów na miejsca w pamięci
 
 // https://stackoverflow.com/questions/16490835/how-to-build-a-compile-time-key-value-store
@@ -57,10 +58,23 @@ struct ct_map<kv<k, v>, rest...> {
     };
 };
 
+// wzorce templatkowe do nauki
+
+template <typename...>
+struct ct_map2;
+
+template <>
+struct ct_map2<> {};
+
+template<num_id_t k, size_t v, typename... rest>
+struct ct_map2<kv<k, v>, rest...> {};
+*/
 
 
 
 // TMPAsm Elements
+
+enum instruction_t {JUMP, DECLARATION, LABEL, INSTRUCTION};
 
 constexpr num_id_t Id(const char* id) {
     num_id_t num_id = 0ULL;
@@ -90,7 +104,8 @@ template <typename Addr>
 struct Mem {
     template <size_t n, typename T>
     static constexpr auto* addr(vars_t<n> vars, std::array<T, n>& memory) {
-//        static_assert(Addr::template rval<n, T>(memory) < n);
+        bool result = Addr::template rval<n, T>(vars, memory);
+        assert(result < n);
         return &memory[Addr::template rval<n, T>(vars, memory)];
     }
     template <size_t n, typename T>
@@ -107,19 +122,19 @@ struct Lea {
             if (vars[i] == num_id)
                 return i;
         }
-        return 0;
-//        assert(false);
+//        return 0;
+        assert(false);
     }
 };
+
 
 // TMPAsm Instructions
 
 template <num_id_t id, typename Value>
 struct D {
-//    static constexpr bool declaration = true;
+    static constexpr instruction_t type = DECLARATION;
     template <size_t n, typename T>
-    static constexpr void execute(vars_t<n>& vars,
-                                  memory_t<n, T>& memory) {
+    static constexpr void declare(vars_t<n>& vars, memory_t<n, T>& memory) {
         size_t i = 0;
         while (i < n) {
             if (vars[i] == 0) {
@@ -135,6 +150,7 @@ struct D {
 
 template <typename LValue, typename RValue>
 struct Mov {
+    static constexpr instruction_t type = INSTRUCTION;
     template <size_t n, typename T>
     static constexpr void execute(vars_t<n>& vars, memory_t<n, T>& memory, bool&, bool&) {
         *LValue::template addr<n, T>(vars, memory) =
@@ -144,6 +160,7 @@ struct Mov {
 
 template <typename LValue, typename RValue>
 struct Add {
+    static constexpr instruction_t type = INSTRUCTION;
     template <size_t n, typename T>
     static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool& SF) {
         auto result = *LValue::template addr<n, T>(vars, memory) +=
@@ -155,6 +172,7 @@ struct Add {
 
 template <typename LValue, typename RValue>
 struct Sub {
+    static constexpr instruction_t type = INSTRUCTION;
     template <size_t n, typename T>
     static constexpr void execute(vars_t<n> vars, memory_t<n, T>& memory, bool& ZF, bool& SF) {
         auto result = *LValue::template addr<n, T>(vars, memory) -=
@@ -165,27 +183,53 @@ struct Sub {
 };
 
 template <typename LValue>
-struct Inc {
-    template <size_t n, typename T>
-    static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory,
-                                  bool& ZF, bool& SF) {
-        auto result = ++*LValue::template addr<n, T>(vars, memory);
-        ZF = result == 0;
-        SF = result < 0;
-    }
-};
+using Inc = Add<LValue, Num<1>>;
 
 template <typename LValue>
-struct Dec {
+using Dec = Sub<LValue, Num<1>>;
+
+
+// miejsce na Adamowe Cmp i operacje bitowe
+
+
+template <num_id_t id>
+struct Label {
+    static constexpr instruction_t type = LABEL;
+    static constexpr num_id_t label = id;
+};
+
+template <num_id_t L>
+struct Jmp {
+    static constexpr instruction_t type = JUMP;
+    static constexpr num_id_t label = L;
     template <size_t n, typename T>
-    static constexpr void execute(std::array<T, n>& memory, bool& ZF, bool& SF) {
-        auto result = --*LValue::template addr<n, T>(memory);
-        ZF = result == 0;
-        SF = result < 0;
+    static constexpr bool should_jump(const bool&, const bool&) {
+        return true;
     }
 };
 
-template <size_t n, typename T, typename T2>
+template <num_id_t L>
+struct Js {
+    static constexpr instruction_t type = JUMP;
+    static constexpr num_id_t label = L;
+    template <size_t n, typename T>
+    static constexpr bool should_jump(const bool&, const bool& SF) {
+        return SF;
+    }
+};
+
+template <num_id_t L>
+struct Jz {
+    static constexpr instruction_t type = JUMP;
+    static constexpr num_id_t label = L;
+    template <size_t n, typename T>
+    static constexpr bool should_jump(const bool& ZF, const bool&) {
+        return ZF;
+    }
+};
+
+
+/*template <size_t n, typename T, typename T2>
 struct isDeclaration {
     static constexpr bool result = false;
 };
@@ -204,16 +248,7 @@ static constexpr bool result = false;
 template <size_t n, typename T>
 struct isDeclaration <n, T, declare_t<n, T>> {
     static constexpr bool result = true;
-};
-
-
-/*
-template <typename Instr>
-struct isDeclaration2 {
-    using a = decltype(Instr::declaration);
-    static constexpr bool result = true;
-};
-*/
+};*/
 
 
 template <typename...>
@@ -223,33 +258,56 @@ template <>
 struct Program <> {
     template <size_t n, typename T>
     static constexpr void declare(vars_t<n>&, memory_t<n, T>&) {}
-    template <size_t n, typename T, typename>
+    template <size_t n, typename T, typename P>
     static constexpr void run(vars_t<n>&,
                               memory_t<n, T>&, bool&, bool&) {}
+    template <size_t n, typename T, typename P>
+    static constexpr void jump(vars_t<n>&, memory_t<n, T>&,
+                               bool&, bool&) {
+        assert(false);
+    }
 };
 
-template <typename Instr, typename ...rest>
-struct Program <Instr, rest...> {
+template <typename Line, typename ...rest>
+struct Program <Line, rest...> {
+
     template <size_t n, typename T>
     static constexpr void declare(vars_t<n>& vars, memory_t<n, T>& memory) {
-        constexpr bool declaration = isDeclaration<
-                n, T, decltype(Instr::template execute<n, T>)>::result;
-        if constexpr (declaration)
-            Instr::template execute<n, T>(vars, memory);
+        if constexpr (Line::type == DECLARATION)
+            Line::template declare<n, T>(vars, memory);
         Program<rest...>::template declare<n, T>(vars, memory);
     }
 
     template <size_t n, typename T, typename P>
     static constexpr void run(vars_t<n>& vars,
             memory_t<n, T>& memory, bool& ZF, bool& SF) {
-        constexpr bool declaration = isDeclaration<
-                n, T, decltype(Instr::template execute<n, T>)>::result;
-        if constexpr (!declaration)
-            Instr::template execute<n, T>(vars, memory, ZF, SF);
-        Program<rest...>::template run<n, T>(vars, memory, ZF, SF);
+        if constexpr (Line::type == JUMP) {
+            if (Line::template should_jump<n, T>(ZF, SF))
+                P::template jump<n, T, P, Line::label>(vars, memory, ZF, SF);
+            else
+                Program<rest...>::template run<n, T, P>(vars, memory, ZF, SF);
+        }
+        else {
+            if constexpr (Line::type == INSTRUCTION)
+                Line::template execute<n, T>(vars, memory, ZF, SF);
+            Program<rest...>::template run<n, T, P>(vars, memory, ZF, SF);
+        }
+    }
+
+    template <size_t n, typename T, typename P, num_id_t label>
+    static constexpr void jump(vars_t<n>& vars, memory_t<n, T>& memory,
+                               bool& ZF, bool& SF) {
+        if constexpr (Line::type == LABEL) {
+            if constexpr (Line::label == label)
+                run<n, T, P>(vars, memory, ZF, SF);
+            else
+                Program<rest...>::template jump<n, T, P, label>(vars, memory, ZF, SF);
+        } else {
+            Program<rest...>::template jump<n, T, P, label>(vars, memory, ZF, SF);
+        }
+
     }
 };
-
 
 template <size_t n, typename T>
 struct Computer {
@@ -264,23 +322,5 @@ struct Computer {
         return memory;
     }
 };
-
-
-
-
-
-
-
-// wzorce templatkowe do nauki
-
-template <typename...>
-struct ct_map2;
-
-template <>
-struct ct_map2<> {};
-
-template<num_id_t k, size_t v, typename... rest>
-struct ct_map2<kv<k, v>, rest...> {};
-
 
 #endif //INC_4_COMPUTER_H
