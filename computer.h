@@ -15,7 +15,7 @@ template <size_t n>
 using vars_t = std::array<num_id_t, n>;
 
 
-/*
+/* todo
 // mapa identyfikatorów na miejsca w pamięci
 
 // https://stackoverflow.com/questions/16490835/how-to-build-a-compile-time-key-value-store
@@ -94,6 +94,7 @@ template <auto num>
 struct Num {
     template <size_t n, typename T>
     static constexpr auto rval(const vars_t<n>&, const memory_t <n, T>&) {
+//        todo usunąć
 //        static_assert(std::is_integral<decltype(num)>::value); -> to zbędne, bo n jako parametr
 //                                                                    array załatwia sprawę
         return num;
@@ -249,6 +250,14 @@ template <size_t n, typename T>
 struct isDeclaration <n, T, declare_t<n, T>> {
     static constexpr bool result = true;
 };*/
+
+// TODO: AND
+
+// TODO: OR
+
+// TODO: NOT
+
+// TODO: CMP
 
 
 template <typename...>
