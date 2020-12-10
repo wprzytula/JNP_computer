@@ -191,12 +191,42 @@ using Inc = Add<LValue, Num<1>>;
 template <typename LValue>
 using Dec = Sub<LValue, Num<1>>;
 
+// TMPAsm logical operations.
 
-// TODO: AND
+template <typename LValue, typename RValue>
+struct And {
+    static constexpr instruction_t type = INSTRUCTION;
+    template <size_t n, typename T>
+    static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool&) {
+        auto result = (*LValue::template addr<n, T>(vars, memory) &=
+                RValue::template rval<n, T>(vars, memory));
+        ZF = result == 0;
+    }
+};
 
-// TODO: OR
+template <typename LValue, typename RValue>
+struct Or {
+    static constexpr instruction_t type = INSTRUCTION;
+    template <size_t n, typename T>
+    static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool&) {
+        auto result = (*LValue::template addr<n, T>(vars, memory) |=
+                RValue::template rval<n, T>(vars, memory));
+        ZF = result == 0;
+    }
+};
 
-// TODO: NOT
+template <typename LValue>
+struct Not {
+    static constexpr instruction_t type = INSTRUCTION;
+    template <size_t n, typename T>
+    static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool&) {
+        auto result = (*LValue::template addr<n, T>(vars, memory) =
+                ~(*LValue::template addr<n, T>(vars, memory)));
+        ZF = result == 0;
+    }
+};
+
+// TMPAsm compare operation.
 
 template <typename RValue1, typename RValue2>
 struct Cmp {
