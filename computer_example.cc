@@ -1,5 +1,6 @@
 #include "computer.h"
 #include <array>
+#include <iostream>
 
 // Operator == dla std::array jest constexpr dopiero od C++20.
 template<class T, std::size_t N>
@@ -12,7 +13,6 @@ constexpr bool compare(std::array<T, N> const& arg1, std::array<T, N> const& arg
 using tmpasm_move = Program<
         Mov<Mem<Num<0>>, Num<42>>>;
 
-/*
 using tmpasm_jump = Program<
         Inc<Mem<Num<0>>>,
         Jmp<Id("stop")>,
@@ -34,7 +34,7 @@ using tmpasm_operations = Program<
         Sub<Mem<Lea<Id("b")>>, Mem<Lea<Id("d")>>>,
         Mov<Mem<Lea<Id("c")>>, Num<0>>,
         Mov<Mem<Lea<Id("d")>>, Num<0>>>;
-*/
+
 using tmpasm_helloworld = Program<
         Mov<Mem<Mem<Num<10>>>, Num<'h'>>,
         Inc<Mem<Num<10>>>,
@@ -58,20 +58,29 @@ using tmpasm_helloworld = Program<
         Inc<Mem<Num<10>>>,
         Mov<Mem<Mem<Num<10>>>, Num<'d'>>>;
 
+using my_prog = Program<
+        Mov<Mem<Num<4>>, Num<42>>//,
+        // D<Id("%"), Num<'a'>>>; --> to powinno się wywalać
+        >;
+
 int main() {
-    auto arr = Computer<11, char>::boot<tmpasm_helloworld>();
+    /*auto arr = Computer<11, char>::boot<tmpasm_helloworld>();
     for (auto itr : arr)
-        std::cout << (char)itr << std::endl;
+        std::cout << (char)itr << std::endl;*/
 
     static_assert(compare(
             Computer<1, int8_t>::boot<tmpasm_move>(),
             std::array<int8_t, 1>({42})),
             "Failed [tmpasp_move].");
-/*
+
     static_assert(compare(
             Computer<1, int>::boot<tmpasm_jump>(),
             std::array<int, 1>({1})),
             "Failed [tmpasp_jump].");
+
+    /*auto arr = Computer<4, uint32_t>::boot<tmpasm_data>();
+    for (auto itr : arr)
+        std::cout << (uint32_t)itr << std::endl;*/
 
     static_assert(compare(
             Computer<4, uint32_t>::boot<tmpasm_data>(),
@@ -82,7 +91,7 @@ int main() {
             Computer<5, int64_t>::boot<tmpasm_operations>(),
             std::array<int64_t, 5>({6, 2, 0, 0, 0})),
             "Failed [tmpasp_operations].");
-*/
+
     static_assert(compare(
             Computer<11, char>::boot<tmpasm_helloworld>(),
             std::array<char, 11>({'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd'})),
