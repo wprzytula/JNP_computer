@@ -15,7 +15,7 @@ template <size_t n>
 using vars_t = std::array<num_id_t, n>;
 
 
-/* todo
+/* [TODO]: usunąć/odkomentować
 // mapa identyfikatorów na miejsca w pamięci
 
 // https://stackoverflow.com/questions/16490835/how-to-build-a-compile-time-key-value-store
@@ -125,7 +125,7 @@ struct Lea {
             if (vars[i] == num_id)
                 return i;
         }
-//        return 0;
+//        return 0; [TODO] delete
         assert(false);
     }
 };
@@ -352,9 +352,8 @@ struct Program <Line, rest...> {
                 run<n, T, P>(vars, memory, ZF, SF);
             else
                 Program<rest...>::template jump<n, T, P, label>(vars, memory, ZF, SF);
-        } else { // [TODO]: Fix the brackets (in other places too)
+        } else
             Program<rest...>::template jump<n, T, P, label>(vars, memory, ZF, SF);
-        }
     }
 };
 
