@@ -74,15 +74,17 @@ struct ct_map2<kv<k, v>, rest...> {};
 
 // TMPAsm Elements
 
+// [TODO]: Consider changing to enum class.
 enum instruction_t {JUMP, DECLARATION, LABEL, INSTRUCTION};
 
+// todo: może wymagać komentarzy
 constexpr num_id_t Id(const char* id) {
     num_id_t num_id = 0ULL;
     unsigned i = 0;
     assert(id[0] != '\0' && ((id[0] >= '0' && id[0] <= '9') ||
            (id[0] >= 'A' && id[0] <= 'Z') || (id[0] >= 'a' && id[0] <= 'z')));
     while (id[i] != '\0') {
-        num_id += ((num_id_t)(unsigned char)(id[i] >= 'a' ? id[i] - ('a' - 'A') : id[i]))
+        num_id += ((num_id_t) (unsigned char) (id[i] >= 'a' ? id[i] - ('a' - 'A') : id[i]))
                 << (8U * i);
         ++i;
         assert(i < 7);
@@ -190,7 +192,23 @@ template <typename LValue>
 using Dec = Sub<LValue, Num<1>>;
 
 
-// miejsce na Adamowe Cmp i operacje bitowe
+// TODO: AND
+
+// TODO: OR
+
+// TODO: NOT
+
+template <typename RValue1, typename RValue2>
+struct Cmp {
+    static constexpr instruction_t type = INSTRUCTION;
+    template <size_t n, typename T>
+    static constexpr void execute(vars_t<n> vars, memory_t<n, T>& memory, bool& ZF, bool& SF) {
+        auto result = RValue1::template rval<n, T>(vars, memory) -
+                RValue2::template rval<n, T>(vars, memory);
+        ZF = result == 0;
+        SF = result < 0;
+    }
+};
 
 
 template <num_id_t id>
@@ -251,13 +269,6 @@ struct isDeclaration <n, T, declare_t<n, T>> {
     static constexpr bool result = true;
 };*/
 
-// TODO: AND
-
-// TODO: OR
-
-// TODO: NOT
-
-// TODO: CMP
 
 
 template <typename...>
@@ -311,10 +322,9 @@ struct Program <Line, rest...> {
                 run<n, T, P>(vars, memory, ZF, SF);
             else
                 Program<rest...>::template jump<n, T, P, label>(vars, memory, ZF, SF);
-        } else {
+        } else { // [TODO]: Fix the brackets (in other places too)
             Program<rest...>::template jump<n, T, P, label>(vars, memory, ZF, SF);
         }
-
     }
 };
 
