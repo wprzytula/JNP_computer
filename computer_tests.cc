@@ -154,9 +154,7 @@ using test_D_syntax2 = Program<
         D<Id("a"), Lea<Id("1")>>>;
 //constexpr auto test_D_syntax2_res = test_machine::boot<test_D_syntax1>();
 
-// Tests for And, Not, Or, Cmp. ~ab
-
-// Unit tests
+// Basic tests for And, Not, Or, Cmp. ~ab
 
 // AND
 
@@ -181,8 +179,8 @@ using test_flag_logical_and = Program<
         Jz<Id("jp3")>,
         Inc<Mem<Num<2>>>,
         Label<Id("jp3")>>;
-constexpr std::array<int, 4> test_log_and_flag = {8, 0, 0, 0};
-static_assert(compare(test_machine::boot<test_flag_logical_and>(), test_log_and_flag));
+constexpr std::array<int, 4> test_log_and_flag_res = {8, 0, 0, 0};
+static_assert(compare(test_machine::boot<test_flag_logical_and>(), test_log_and_flag_res));
 
 // OR
 
@@ -207,8 +205,8 @@ using test_flag_logical_or = Program<
     Jz<Id("jp3")>,
     Inc<Mem<Num<2>>>,
     Label<Id("jp3")>>;
-constexpr std::array<int, 4> test_log_or_flag = {10, 0, 0, 0};
-static_assert(compare(test_machine::boot<test_flag_logical_or>(), test_log_or_flag));
+constexpr std::array<int, 4> test_log_or_flag_res = {10, 0, 0, 0};
+static_assert(compare(test_machine::boot<test_flag_logical_or>(), test_log_or_flag_res));
 
 // NOT
 
@@ -232,8 +230,45 @@ using test_flag_logical_not = Program<
     Jz<Id("jp3")>,
     Inc<Mem<Num<2>>>,
     Label<Id("jp3")>>;
-constexpr std::array<int, 4> test_log_not_flag = {-11, 0, 0, 0};
-static_assert(compare(test_machine::boot<test_flag_logical_not>(), test_log_not_flag));
+constexpr std::array<int, 4> test_log_not_flag_res = {-11, 0, 0, 0};
+static_assert(compare(test_machine::boot<test_flag_logical_not>(), test_log_not_flag_res));
+
+// CMP
+// Only one test, since CMP only sets flags.
+
+using test_compare = Program<
+    D<Id("first"), Num<10>>,
+    D<Id("second"), Num<1>>,
+    D<Id("third"), Num<0>>,
+    Cmp<Mem<Lea<Id("first")>>, Mem<Lea<Id("second")>>>,
+    Cmp<Mem<Lea<Id("first")>>, Lea<Id("second")>>,
+    Cmp<Mem<Lea<Id("first")>>, Num<5>>,
+    Cmp<Lea<Id("third")>, Mem<Lea<Id("second")>>>,
+    Cmp<Lea<Id("third")>, Lea<Id("second")>>,
+    Cmp<Lea<Id("third")>, Num<0>>,
+    Cmp<Num<42>, Mem<Lea<Id("second")>>>,
+    Cmp<Num<42>, Lea<Id("second")>>,
+    Cmp<Num<42>, Num<5>>,
+    // Should not jump
+    Jz<Id("42")>,
+    Js<Id("42")>,
+    Inc<Mem<Lea<Id("third")>>>,
+    Cmp<Num<10>, Num<10>>,
+    // Should jump only on Jz
+    Js<Id("42")>,
+    Jz<Id("21")>,
+    Inc<Mem<Lea<Id("third")>>>,
+    Label<Id("21")>,
+    Cmp<Num<5>, Num<10>>,
+    // Should jump only on Js
+    Jz<Id("42")>,
+    Js<Id("37")>,
+    Inc<Mem<Lea<Id("third")>>>,
+    Label<Id("37")>,
+    Inc<Mem<Num<3>>>,
+    Label<Id("42")>>;
+constexpr std::array<int, 4> test_compare_res = {10, 1, 1, 1};
+static_assert(compare(test_machine::boot<test_compare>(), test_compare_res));
 
 int main() {
 //
