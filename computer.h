@@ -203,7 +203,6 @@ template <num_id_t L>
 struct Jmp : Instruction {
     static constexpr instruction_t ins_type = JUMP;
     static constexpr num_id_t label = L;
-    template <size_t n, typename T>
     static constexpr bool should_jump(const bool&, const bool&) {
         return true;
     }
@@ -213,7 +212,6 @@ template <num_id_t L>
 struct Js : Instruction {
     static constexpr instruction_t ins_type = JUMP;
     static constexpr num_id_t label = L;
-    template <size_t n, typename T>
     static constexpr bool should_jump(const bool&, const bool& SF) {
         return SF;
     }
@@ -223,7 +221,6 @@ template <num_id_t L>
 struct Jz : Instruction {
     static constexpr instruction_t ins_type = JUMP;
     static constexpr num_id_t label = L;
-    template <size_t n, typename T>
     static constexpr bool should_jump(const bool& ZF, const bool&) {
         return ZF;
     }
@@ -261,7 +258,7 @@ struct Program <Line, rest...> {
     static constexpr void run(vars_t<n>& vars,
             memory_t<n, T>& memory, bool& ZF, bool& SF) {
         if constexpr (Line::ins_type == JUMP) {
-            if (Line::template should_jump<n, T>(ZF, SF))
+            if (Line::should_jump(ZF, SF))
                 P::template jump<n, T, P, Line::label>(vars, memory, ZF, SF);
             else
                 Program<rest...>::template run<n, T, P>(vars, memory, ZF, SF);
