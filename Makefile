@@ -1,14 +1,12 @@
 CPPFLAGS=-Wall -Wextra -std=c++17 -lstdc++ -O2
 
-all: computer_example
+all: computer_example computer_tests
 
-computer.o: computer.cc computer.h
-	clang $(CPPFLAGS) -c -o $@ $< 
-computer_example.o: computer_example.cc computer.h
-	clang $(CPPFLAGS) -c -o $@ $<
-computer_example: computer_example.o computer.o
-	clang $(CPPFLAGS) -o $@ $^
+computer_example: computer_example.cc computer.h
+	clang $(CPPFLAGS) -o $@ $<
+computer_tests: computer_tests.cc computer.h
+	clang $(CPPFLAGS) -o $@ $<
 
 clean:
-	rm -f *.o computer_example
+	rm -f computer_example computer_tests
 

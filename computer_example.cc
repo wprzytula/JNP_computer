@@ -58,15 +58,7 @@ using tmpasm_helloworld = Program<
         Inc<Mem<Num<10>>>,
         Mov<Mem<Mem<Num<10>>>, Num<'d'>>>;
 
-using my_prog = Program<
-        Mov<Mem<Num<4>>, Num<42>>//,
-        // D<Id("%"), Num<'a'>>>; --> to powinno się wywalać
-        >;
-
 int main() {
-    /*auto arr = Computer<11, char>::boot<tmpasm_helloworld>();
-    for (auto itr : arr)
-        std::cout << (char)itr << std::endl;*/
 
     static_assert(compare(
             Computer<1, int8_t>::boot<tmpasm_move>(),
@@ -77,10 +69,6 @@ int main() {
             Computer<1, int>::boot<tmpasm_jump>(),
             std::array<int, 1>({1})),
             "Failed [tmpasp_jump].");
-
-    /*auto arr = Computer<4, uint32_t>::boot<tmpasm_data>();
-    for (auto itr : arr)
-        std::cout << (uint32_t)itr << std::endl;*/
 
     static_assert(compare(
             Computer<4, uint32_t>::boot<tmpasm_data>(),
