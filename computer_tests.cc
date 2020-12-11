@@ -154,6 +154,22 @@ using test_D_syntax2 = Program<
         D<Id("a"), Lea<Id("1")>>>;
 //constexpr auto test_D_syntax2_res = test_machine::boot<test_D_syntax1>();
 
+// Tests for And, Not, Or, Cmp. ~ab
+
+// Unit tests
+
+using test_logical_and_res = Program<
+        D<Id("first"), Num<5>>,
+        D<Id("second"), Num<10>>,
+        D<Id("third"), Num<13>>,
+        D<Id("fourth"), Num<6>>,
+        And<Mem<Lea<Id("first")>>, Num<3>>,
+        And<Mem<Lea<Id("second")>>, Lea<Id("fourth")>>,
+        And<Mem<Lea<Id("third")>>, Mem<Lea<Id("fourth")>>>>;
+constexpr std::array<int, 4> test_log_and_res = {1, 2, 4, 6};
+static_assert(compare(test_machine::boot<test_logical_and_res>(), test_log_and_res));
+
+
 
 
 int main() {
