@@ -59,15 +59,16 @@ using test_id1 = Program<
         Jmp<Id("loop")>,
         Label<Id("end")>
         >;
+constexpr auto test_id1_res = test_machine::boot<test_id1>();
 
 using test_overflow = Program<
-        D<Id("sth"), Num<INT32_MAX>>,
+        D<Id("sth"), Num<2147483560>>,
         Label<Id("begin")>,
         Inc<Mem<Num<0>>>,
         Js<Id("end")>,
         Jmp<Id("begin")>,
         Label<Id("end")>>;
-constexpr auto test_overflow_res = test_machine::boot<test_overflow>();
+//constexpr auto test_overflow_res = test_machine::boot<test_overflow>();
 
 using test_underflow = Program<
         D<Id("mem0"), Num<INT32_MIN>>,
@@ -277,7 +278,7 @@ int main() {
 //test_machine::boot<test_id1>();
 //
 //auto arr = test_machine::boot<test_id1>();
-std::cout << INT32_MAX << std::endl;
-for (auto itr : test_underflow_res)
-    std::cout << (int) itr << std::endl;
+//std::cout << INT32_MAX << std::endl;
+//for (auto itr : test_underflow_res)
+//    std::cout << (int) itr << std::endl;
 }
