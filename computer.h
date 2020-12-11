@@ -1,3 +1,14 @@
+/*
+ * Pytania do Peczara:
+ * 1) czy opakować funkcje i typy pomocnicze w jakiś namespace?
+ *
+ *
+ *
+ *
+ * */
+
+
+
 #ifndef INC_4_COMPUTER_H
 #define INC_4_COMPUTER_H
 
@@ -5,6 +16,11 @@
 #include <array>
 #include <cassert>
 #include <type_traits>
+#include <limits>
+
+// TODO: wywalić to
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 
 using num_id_t = unsigned long long;
@@ -105,13 +121,45 @@ struct Mov : Instruction {
     }
 };
 
+template <typename T>
+constexpr T add(T op1, T op2) {
+    if (op1 > 0 && op2 > 0) { // check for overflow - possible only when both operands are positive
+        T to_max = std::numeric_limits<T>::max() - op2;
+        if (to_max < op1)
+            return std::numeric_limits<T>::min() + op2 - (std::numeric_limits<T>::max() - op1) - 1;
+        else
+            return op1 + op2;
+    } else if (op1 < 0 && op2 < 0) { // check for underflow
+        T to_min = op2 - std::numeric_limits<T>::min();
+        if (op2 < to_min) {
+            T temp = op1 - std::numeric_limits<T>::min();
+            return std::numeric_limits<T>::max() + op2 + temp; }
+        else
+            return op1 + op2;
+    } else {
+        return op1 + op2;
+    }
+}
+
+template <typename T>
+constexpr T subtract(T op1, T op2) {
+    if (op2 == std::numeric_limits<T>::min()) {
+        // TODO
+    } else {
+        return add<T>(op1, -op2);
+    }
+}
+
 template <typename LValue, typename RValue>
 struct Add : Instruction {
     static constexpr instruction_t ins_type = INSTRUCTION;
     template <size_t n, typename T>
     static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool& SF) {
-        T result = (T)(*LValue::template addr<n, T>(vars, memory) +=
-                RValue::template rval<n, T>(vars, memory));
+        T* lval = LValue::template addr<n, T>(vars, memory);
+        T rval = RValue::template rval<n, T>(vars, memory);
+
+        T result = *lval = add<T>(*lval, rval);
+//        T result = *lval += rval;
         ZF = result == (T)0;
         SF = result < (T)0;
     }
@@ -122,9 +170,9 @@ struct Sub : Instruction {
     static constexpr instruction_t ins_type = INSTRUCTION;
     template <size_t n, typename T>
     static constexpr void execute(vars_t<n> vars, memory_t<n, T>& memory, bool& ZF, bool& SF) {
-        auto* lval = LValue::template addr<n, T>(vars, memory);
-        auto rval = RValue::template rval<n, T>(vars, memory);
-        T result = *lval = (T)(*lval - rval);
+        T* lval = LValue::template addr<n, T>(vars, memory);
+        T rval = RValue::template rval<n, T>(vars, memory);
+        T result = *lval -= rval;
         ZF = result == (T)0;
         SF = result < (T)0;
     }
@@ -175,28 +223,6 @@ struct Jz : Instruction {
         return ZF;
     }
 };
-
-
-/*template <size_t n, typename T, typename T2>
-struct isDeclaration {
-    static constexpr bool result = false;
-};
-
-template<size_t n, typename T>
-using execute_t = void (vars_t<n>&, memory_t <n, T>&, bool&, bool&);
-
-template<size_t n, typename T>
-using declare_t = void (vars_t<n>&, memory_t <n, T>&);
-
-template <size_t n, typename T>
-struct isDeclaration <n, T, execute_t<n, T>> {
-static constexpr bool result = false;
-};
-
-template <size_t n, typename T>
-struct isDeclaration <n, T, declare_t<n, T>> {
-    static constexpr bool result = true;
-};*/
 
 
 template <typename...>
@@ -329,3 +355,5 @@ struct ct_map2<kv<k, v>, rest...> {};
 */
 
 #endif //INC_4_COMPUTER_H
+
+#pragma clang diagnostic pop

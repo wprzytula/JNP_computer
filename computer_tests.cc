@@ -60,18 +60,36 @@ using test_id1 = Program<
         Label<Id("end")>
         >;
 
+using test_overflow = Program<
+        D<Id("sth"), Num<INT32_MAX>>,
+        Label<Id("begin")>,
+        Inc<Mem<Num<0>>>,
+        Js<Id("end")>,
+        Jmp<Id("begin")>,
+        Label<Id("end")>>;
+constexpr auto test_overflow_res = test_machine::boot<test_overflow>();
+
 using test_underflow = Program<
         D<Id("mem0"), Num<INT32_MIN>>,
-        Dec<Mem<Lea<Id("MEM0")>>>>;
-//constexpr auto test_underflow_res = test_machine::boot<test_underflow>();
+        Add<Mem<Lea<Id("MEM0")>>, Num<-1>>>;
+constexpr std::array<int, 4> test_underflow_res = {INT32_MAX, 0, 0, 0};
+//static_assert(compare(test_machine::boot<test_underflow>(), test_underflow_res));
 
-using test_finite_loop = Program<
+using test_finite_loop1 = Program<
         Label<Id("loop")>,
         Dec<Mem<Lea<Id("MEM0")>>>,
         Js<Id("LOOP")>,
         D<Id("mem0"), Num<INT32_MIN + 100>>
 >;
-//constexpr auto test_finite_loop_res = test_machine::boot<test_finite_loop>();
+//constexpr auto test_finite_loop1_res = test_machine::boot<test_finite_loop1>();
+
+using test_finite_loop2 = Program<
+        Label<Id("loop")>,
+        Dec<Mem<Lea<Id("MEM0")>>>,
+        Js<Id("LOOP")>,
+        D<Id("mem0"), Num<10000>>
+>;
+constexpr auto test_finite_loop2_res = test_machine::boot<test_finite_loop2>();
 
 
 // tests that should not compile (i.e. template parsing error):
@@ -92,10 +110,7 @@ using test_finite_loop = Program<
 
 using test_infinite_loop = Program<
         Label<Id("loop")>,
-        Mov<Mem<Lea<Id("MEM0")>>, Num<0>>,
-        Jmp<Id("LOOP")>,
-        D<Id("mem0"), Num<-1000000>>
->;
+        Jmp<Id("LOOP")>>;
 //constexpr auto test_infinite_loop_res = test_machine::boot<test_infinite_loop>();
 
 using test_bad_program = Num<4>;
@@ -141,13 +156,14 @@ using test_D_syntax2 = Program<
 
 
 
-//int main() {
+int main() {
 //
 //
 //test_machine::boot<test_finite_loop>();
 //test_machine::boot<test_id1>();
 //
 //auto arr = test_machine::boot<test_id1>();
-//for (auto itr : arr)
-//    std::cout << (int) itr << std::endl;
-//}
+std::cout << INT32_MAX << std::endl;
+for (auto itr : test_underflow_res)
+    std::cout << (int) itr << std::endl;
+}

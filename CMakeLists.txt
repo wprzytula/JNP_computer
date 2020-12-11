@@ -9,4 +9,5 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -std=c++17 -O2 -lstdc++")
 
 add_executable(4 computer.h
 #                 computer_example.cc
-        computer_tests.cc)
+                 computer_tests.cc
+        )
