@@ -211,7 +211,7 @@ struct Or : Instruction {
 
 template <typename LValue>
 struct Not : Instruction {
-    static constexpr instruction_t type = INSTRUCTION;
+    static constexpr instruction_t ins_type = INSTRUCTION;
     template <size_t n, typename T>
     static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool&) {
         auto result = (*LValue::template addr<n, T>(vars, memory) =
@@ -224,7 +224,7 @@ struct Not : Instruction {
 
 template <typename RValue1, typename RValue2>
 struct Cmp : Instruction {
-    static constexpr instruction_t type = INSTRUCTION;
+    static constexpr instruction_t ins_type = INSTRUCTION;
     template <size_t n, typename T>
     static constexpr void execute(vars_t<n> vars, memory_t<n, T>& memory, bool& ZF, bool& SF) {
         auto result = RValue1::template rval<n, T>(vars, memory) -

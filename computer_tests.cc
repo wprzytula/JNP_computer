@@ -158,19 +158,82 @@ using test_D_syntax2 = Program<
 
 // Unit tests
 
-using test_logical_and_res = Program<
+// AND
+
+using test_results_logical_and = Program<
         D<Id("first"), Num<5>>,
-        D<Id("second"), Num<10>>,
+        D<Id("second"), Num<15>>,
         D<Id("third"), Num<13>>,
         D<Id("fourth"), Num<6>>,
         And<Mem<Lea<Id("first")>>, Num<3>>,
         And<Mem<Lea<Id("second")>>, Lea<Id("fourth")>>,
         And<Mem<Lea<Id("third")>>, Mem<Lea<Id("fourth")>>>>;
-constexpr std::array<int, 4> test_log_and_res = {1, 2, 4, 6};
-static_assert(compare(test_machine::boot<test_logical_and_res>(), test_log_and_res));
+constexpr std::array<int, 4> test_log_and_res = {1, 3, 4, 6};
+static_assert(compare(test_machine::boot<test_results_logical_and>(), test_log_and_res));
 
+// Assumes working conditional jump.
+using test_flag_logical_and = Program<
+        D<Id("first"), Num<10>>,
+        D<Id("second"), Num<2>>,
+        And<Mem<Lea<Id("first")>>, Num<8>>,
+        Jz<Id("jp3")>,
+        And<Mem<Lea<Id("second")>>, Num<8>>,
+        Jz<Id("jp3")>,
+        Inc<Mem<Num<2>>>,
+        Label<Id("jp3")>>;
+constexpr std::array<int, 4> test_log_and_flag = {8, 0, 0, 0};
+static_assert(compare(test_machine::boot<test_flag_logical_and>(), test_log_and_flag));
 
+// OR
 
+using test_results_logical_or = Program<
+    D<Id("first"), Num<5>>,
+    D<Id("second"), Num<10>>,
+    D<Id("third"), Num<13>>,
+    D<Id("fourth"), Num<6>>,
+    Or<Mem<Lea<Id("first")>>, Num<3>>,
+    Or<Mem<Lea<Id("second")>>, Lea<Id("fourth")>>,
+    Or<Mem<Lea<Id("third")>>, Mem<Lea<Id("fourth")>>>>;
+constexpr std::array<int, 4> test_log_or_res = {7, 11, 15, 6};
+static_assert(compare(test_machine::boot<test_results_logical_or>(), test_log_or_res));
+
+// Assumes working conditional jump.
+using test_flag_logical_or = Program<
+    D<Id("first"), Num<10>>,
+    D<Id("second"), Num<0>>,
+    Or<Mem<Lea<Id("first")>>, Num<8>>,
+    Jz<Id("jp3")>,
+    Or<Mem<Lea<Id("second")>>, Num<0>>,
+    Jz<Id("jp3")>,
+    Inc<Mem<Num<2>>>,
+    Label<Id("jp3")>>;
+constexpr std::array<int, 4> test_log_or_flag = {10, 0, 0, 0};
+static_assert(compare(test_machine::boot<test_flag_logical_or>(), test_log_or_flag));
+
+// NOT
+
+using test_results_logical_not = Program<
+    D<Id("first"), Num<10>>,
+    D<Id("second"), Num<-10>>,
+    D<Id("third"), Num<0>>,
+    Not<Mem<Lea<Id("first")>>>,
+    Not<Mem<Lea<Id("second")>>>,
+    Not<Mem<Lea<Id("third")>>>>;
+constexpr std::array<int, 4> test_log_not_res = {-11, 9, -1, 0};
+static_assert(compare(test_machine::boot<test_results_logical_not>(), test_log_not_res));
+
+// Assumes working conditional jump.
+using test_flag_logical_not = Program<
+    D<Id("first"), Num<10>>,
+    D<Id("second"), Num<-1>>,
+    Not<Mem<Lea<Id("first")>>>,
+    Jz<Id("jp3")>,
+    Not<Mem<Lea<Id("second")>>>,
+    Jz<Id("jp3")>,
+    Inc<Mem<Num<2>>>,
+    Label<Id("jp3")>>;
+constexpr std::array<int, 4> test_log_not_flag = {-11, 0, 0, 0};
+static_assert(compare(test_machine::boot<test_flag_logical_not>(), test_log_not_flag));
 
 int main() {
 //
