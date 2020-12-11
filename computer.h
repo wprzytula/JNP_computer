@@ -1,12 +1,12 @@
 /*
  * Pytania do Peczara:
  * 1) czy opakować funkcje i typy pomocnicze w jakiś namespace?
- *
- *
- *
+ * 2) czy zwykłe asercje będą okej?
+ * 3) co z overflowami?
+ * 4) czy enumy są okej?
+ * 5) ogólna ocena jakości kodu?
  *
  * */
-
 
 
 #ifndef INC_4_COMPUTER_H
@@ -17,10 +17,6 @@
 #include <cassert>
 #include <type_traits>
 #include <limits>
-
-// TODO: wywalić to
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 
 using num_id_t = unsigned long long;
@@ -38,7 +34,6 @@ using vars_t = std::array<num_id_t, n>;
 enum instruction_t {JUMP, DECLARATION, LABEL, INSTRUCTION};
 enum element_t {NUM, LEA, MEM};
 
-// todo: może wymagać komentarzy
 constexpr num_id_t Id(const char* id) {
     num_id_t num_id = 0ULL;
     unsigned i = 0;
@@ -88,14 +83,13 @@ struct Lea {
     }
 };
 
-
 // TMPAsm Instructions
 
 struct Instruction {};
 
 template <num_id_t id, typename Value>
 struct D : Instruction {
-    static_assert(Value::el_type == NUM);
+    static_assert(Value::el_type == NUM, "Value parameter of D instruction must be Num!");
     static constexpr instruction_t ins_type = DECLARATION;
     template <size_t n, typename T>
     static constexpr void declare(vars_t<n>& vars, memory_t<n, T>& memory) {
@@ -122,35 +116,6 @@ struct Mov : Instruction {
     }
 };
 
-template <typename T>
-constexpr T add(T op1, T op2) {
-    if (op1 > 0 && op2 > 0) { // check for overflow - possible only when both operands are positive
-        T to_max = std::numeric_limits<T>::max() - op2;
-        if (to_max < op1)
-            return std::numeric_limits<T>::min() + op2 - (std::numeric_limits<T>::max() - op1) - 1;
-        else
-            return op1 + op2;
-    } else if (op1 < 0 && op2 < 0) { // check for underflow
-        T to_min = op2 - std::numeric_limits<T>::min();
-        if (op2 < to_min) {
-            T temp = op1 - std::numeric_limits<T>::min();
-            return std::numeric_limits<T>::max() + op2 + temp; }
-        else
-            return op1 + op2;
-    } else {
-        return op1 + op2;
-    }
-}
-
-template <typename T>
-constexpr T subtract(T op1, T op2) {
-    if (op2 == std::numeric_limits<T>::min()) {
-        // TODO
-    } else {
-        return add<T>(op1, -op2);
-    }
-}
-
 template <typename LValue, typename RValue>
 struct Add : Instruction {
     static constexpr instruction_t ins_type = INSTRUCTION;
@@ -158,9 +123,7 @@ struct Add : Instruction {
     static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool& SF) {
         T* lval = LValue::template addr<n, T>(vars, memory);
         T rval = RValue::template rval<n, T>(vars, memory);
-
-        T result = *lval = add<T>(*lval, rval);
-//        T result = *lval += rval;
+        T result = *lval += rval;
         ZF = result == (T)0;
         SF = result < (T)0;
     }
@@ -185,7 +148,17 @@ using Inc = Add<LValue, Num<1>>;
 template <typename LValue>
 using Dec = Sub<LValue, Num<1>>;
 
-// TMPAsm logical operations.
+template <typename RValue1, typename RValue2>
+struct Cmp {
+    static constexpr instruction_t type = INSTRUCTION;
+    template <size_t n, typename T>
+    static constexpr void execute(vars_t<n> vars, memory_t<n, T>& memory, bool& ZF, bool& SF) {
+        auto result = RValue1::template rval<n, T>(vars, memory) -
+                      RValue2::template rval<n, T>(vars, memory);
+        ZF = result == 0;
+        SF = result < 0;
+    }
+};
 
 template <typename LValue, typename RValue>
 struct And {
@@ -219,21 +192,6 @@ struct Not {
         ZF = result == 0;
     }
 };
-
-// TMPAsm compare operation.
-
-template <typename RValue1, typename RValue2>
-struct Cmp {
-    static constexpr instruction_t type = INSTRUCTION;
-    template <size_t n, typename T>
-    static constexpr void execute(vars_t<n> vars, memory_t<n, T>& memory, bool& ZF, bool& SF) {
-        auto result = RValue1::template rval<n, T>(vars, memory) -
-                RValue2::template rval<n, T>(vars, memory);
-        ZF = result == 0;
-        SF = result < 0;
-    }
-};
-
 
 template <num_id_t id>
 struct Label : Instruction {
@@ -290,7 +248,7 @@ struct Program <> {
 
 template <typename Line, typename ...rest>
 struct Program <Line, rest...> {
-    static_assert(std::is_base_of<Instruction, Line>::value);
+    static_assert(std::is_base_of<Instruction, Line>::value, "Wrong instruction type!");
 
     template <size_t n, typename T>
     static constexpr void declare(vars_t<n>& vars, memory_t<n, T>& memory) {
@@ -343,5 +301,3 @@ struct Computer {
 };
 
 #endif //INC_4_COMPUTER_H
-
-#pragma clang diagnostic pop
