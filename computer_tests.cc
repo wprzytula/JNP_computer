@@ -254,13 +254,13 @@ using test_compare = Program<
     Js<Id("42")>,
     Inc<Mem<Lea<Id("third")>>>,
     Cmp<Num<10>, Num<10>>,
-    // Should jump only on Jz
+    // Should jump only on Jz, to label "21"
     Js<Id("42")>,
     Jz<Id("21")>,
     Inc<Mem<Lea<Id("third")>>>,
     Label<Id("21")>,
     Cmp<Num<5>, Num<10>>,
-    // Should jump only on Js
+    // Should jump only on Js, to label "37"
     Jz<Id("42")>,
     Js<Id("37")>,
     Inc<Mem<Lea<Id("third")>>>,
