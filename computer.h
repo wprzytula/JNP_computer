@@ -34,17 +34,18 @@ using vars_t = std::array<num_id_t, n>;
 
 // TMPAsm Elements
 
+// [TODO]: Consider changing to enum class.
 enum instruction_t {JUMP, DECLARATION, LABEL, INSTRUCTION};
 enum element_t {NUM, LEA, MEM};
 
-
-constexpr auto Id(const char* id) {
+// todo: może wymagać komentarzy
+constexpr num_id_t Id(const char* id) {
     num_id_t num_id = 0ULL;
     unsigned i = 0;
     assert(id[0] != '\0' && ((id[0] >= '0' && id[0] <= '9') ||
            (id[0] >= 'A' && id[0] <= 'Z') || (id[0] >= 'a' && id[0] <= 'z')));
     while (id[i] != '\0') {
-        num_id += ((num_id_t)(unsigned char)(id[i] >= 'a' ? id[i] - ('a' - 'A') : id[i]))
+        num_id += ((num_id_t) (unsigned char) (id[i] >= 'a' ? id[i] - ('a' - 'A') : id[i]))
                 << (8U * i);
         ++i;
         assert(i < 7);
@@ -184,8 +185,54 @@ using Inc = Add<LValue, Num<1>>;
 template <typename LValue>
 using Dec = Sub<LValue, Num<1>>;
 
+// TMPAsm logical operations.
 
-// miejsce na Adamowe Cmp i operacje bitowe
+template <typename LValue, typename RValue>
+struct And {
+    static constexpr instruction_t type = INSTRUCTION;
+    template <size_t n, typename T>
+    static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool&) {
+        auto result = (*LValue::template addr<n, T>(vars, memory) &=
+                RValue::template rval<n, T>(vars, memory));
+        ZF = result == 0;
+    }
+};
+
+template <typename LValue, typename RValue>
+struct Or {
+    static constexpr instruction_t type = INSTRUCTION;
+    template <size_t n, typename T>
+    static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool&) {
+        auto result = (*LValue::template addr<n, T>(vars, memory) |=
+                RValue::template rval<n, T>(vars, memory));
+        ZF = result == 0;
+    }
+};
+
+template <typename LValue>
+struct Not {
+    static constexpr instruction_t type = INSTRUCTION;
+    template <size_t n, typename T>
+    static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool&) {
+        auto result = (*LValue::template addr<n, T>(vars, memory) =
+                ~(*LValue::template addr<n, T>(vars, memory)));
+        ZF = result == 0;
+    }
+};
+
+// TMPAsm compare operation.
+
+template <typename RValue1, typename RValue2>
+struct Cmp {
+    static constexpr instruction_t type = INSTRUCTION;
+    template <size_t n, typename T>
+    static constexpr void execute(vars_t<n> vars, memory_t<n, T>& memory, bool& ZF, bool& SF) {
+        auto result = RValue1::template rval<n, T>(vars, memory) -
+                RValue2::template rval<n, T>(vars, memory);
+        ZF = result == 0;
+        SF = result < 0;
+    }
+};
 
 
 template <num_id_t id>
@@ -223,7 +270,6 @@ struct Jz : Instruction {
         return ZF;
     }
 };
-
 
 template <typename...>
 struct Program;
@@ -277,10 +323,8 @@ struct Program <Line, rest...> {
                 run<n, T, P>(vars, memory, ZF, SF);
             else
                 Program<rest...>::template jump<n, T, P, label>(vars, memory, ZF, SF);
-        } else {
+        } else
             Program<rest...>::template jump<n, T, P, label>(vars, memory, ZF, SF);
-        }
-
     }
 };
 
@@ -297,62 +341,6 @@ struct Computer {
         return memory;
     }
 };
-
-
-/*
-// mapa identyfikatorów na miejsca w pamięci
-
-// https://stackoverflow.com/questions/16490835/how-to-build-a-compile-time-key-value-store
-
-template <num_id_t kk, size_t vv>
-struct kv {
-    static constexpr num_id_t k = kk;
-    static constexpr size_t v = vv;
-};
-
-template <typename...>
-struct ct_map;
-
-template <>
-struct ct_map<> {
-    template<num_id_t>
-    struct get {
-        static constexpr auto val = 0; // default case
-    };
-
-    template <num_id_t kk, size_t vv>
-    struct add {
-        using result = ct_map<kv<kk, vv>>;
-    };
-};
-
-template<num_id_t k, size_t v, typename... rest>
-struct ct_map<kv<k, v>, rest...> {
-    template<num_id_t kk>
-    struct get {
-        static constexpr auto val =
-                (kk == k) ?
-                v :
-                ct_map<rest...>::template get<kk>::val;
-    };
-    template <num_id_t kk, size_t vv>
-
-    struct add {
-        using result = ct_map<kv<kk, vv>, kv<k, v>, rest...>;
-    };
-};
-
-// wzorce templatkowe do nauki
-
-template <typename...>
-struct ct_map2;
-
-template <>
-struct ct_map2<> {};
-
-template<num_id_t k, size_t v, typename... rest>
-struct ct_map2<kv<k, v>, rest...> {};
-*/
 
 #endif //INC_4_COMPUTER_H
 
