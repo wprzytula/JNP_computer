@@ -38,15 +38,16 @@ constexpr num_id_t Id(const char *id) {
         if (TMPAsm::is_id_sign_incorrect(id[i]))
             throw std::exception();
 
-        num_id += ((num_id_t) (unsigned char) (id[i] >= 'a' ? id[i] - ('a' - 'A') : id[i]))
-                    << (8U * i);
+        num_id +=
+            ((num_id_t) (unsigned char) (id[i] >= 'a' ? id[i] - ('a' - 'A') : id[i]))
+                << (8U * i);
         ++i;
 
         if (i >= 7U)
             throw std::exception();
     }
 
-    if(i == 0)
+    if (i == 0)
         throw std::exception();
 
     return num_id;
