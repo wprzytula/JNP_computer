@@ -143,9 +143,9 @@ struct Add : Instruction {
                                 bool &SF) {
       T *lval = LValue::template addr<n, T>(vars, memory);
       T rval = RValue::template rval<n, T>(vars, memory);
-      T result = *lval += rval;
-      ZF = result == (T) 0;
-      SF = result < (T) 0;
+      T result = (*lval += rval);
+      ZF = (result == (T) 0);
+      SF = (result < (T) 0);
   }
 };
 
@@ -160,9 +160,9 @@ struct Sub : Instruction {
                                 bool &SF) {
       T *lval = LValue::template addr<n, T>(vars, memory);
       T rval = RValue::template rval<n, T>(vars, memory);
-      T result = *lval -= rval;
-      ZF = result == (T) 0;
-      SF = result < (T) 0;
+      T result = (*lval -= rval);
+      ZF = (result == (T) 0);
+      SF = (result < (T) 0);
   }
 };
 
@@ -183,8 +183,8 @@ struct Cmp : Instruction {
                                 bool &SF) {
       auto result = RValue1::template rval<n, T>(vars, memory) -
           RValue2::template rval<n, T>(vars, memory);
-      ZF = (result == 0);
-      SF = (result < 0);
+      ZF = (result == (T) 0);
+      SF = (result < (T) 0);
   }
 };
 
@@ -199,7 +199,7 @@ struct And : Instruction {
                                 bool &) {
       auto result = (*LValue::template addr<n, T>(vars, memory) &=
                          RValue::template rval<n, T>(vars, memory));
-      ZF = (result == 0);
+      ZF = (result == (T) 0);
   }
 };
 
@@ -214,7 +214,7 @@ struct Or : Instruction {
                                 bool &) {
       auto result = (*LValue::template addr<n, T>(vars, memory) |=
                          RValue::template rval<n, T>(vars, memory));
-      ZF = (result == 0);
+      ZF = (result == (T) 0);
   }
 };
 
@@ -229,7 +229,7 @@ struct Not : Instruction {
                                 bool &) {
       auto result = (*LValue::template addr<n, T>(vars, memory) =
                          ~(*LValue::template addr<n, T>(vars, memory)));
-      ZF = (result == 0);
+      ZF = (result == (T) 0);
   }
 };
 
