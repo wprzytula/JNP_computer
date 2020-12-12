@@ -24,8 +24,9 @@ enum class element_t { NUM, LEA, MEM };
 
 namespace {
 constexpr bool is_id_sign_incorrect(char ch) {
-    return !((ch >= '0' && ch <= '9') ||
-        (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'));
+    return !((ch >= '0' && ch <= '9')
+            || (ch >= 'A' && ch <= 'Z')
+            || (ch >= 'a' && ch <= 'z'));
 }
 }
 
@@ -39,6 +40,7 @@ constexpr num_id_t Id(const char *id) {
     while (id[i] != '\0') {
         if (is_id_sign_incorrect(id[i]))
             throw std::exception();
+
         num_id += ((num_id_t) (unsigned char) (id[i] >= 'a' ? id[i] - ('a' - 'A') : id[i]))
                     << (8U * i);
         ++i;
@@ -292,6 +294,7 @@ struct Program<Line, rest...> {
   static constexpr void declare(vars_t<n> &vars, memory_t<n, T> &memory) {
       if constexpr (Line::ins_type == instruction_t::DECLARATION)
           Line::template declare<n, T>(vars, memory);
+
       Program<rest...>::template declare<n, T>(vars, memory);
   }
 
