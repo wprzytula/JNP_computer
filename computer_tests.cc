@@ -284,6 +284,6 @@ int main() {
 //
 //auto arr = test_machine::boot<test_id1>();
 //std::cout << INT32_MAX << std::endl;
-//for (auto itr : test_underflow_res)
-//    std::cout << (int) itr << std::endl;
+for (auto itr : test_declarations_res)
+    std::cout << (int) itr << std::endl;
 }

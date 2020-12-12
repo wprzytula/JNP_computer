@@ -22,30 +22,30 @@ using vars_t = std::array<num_id_t, n>;
 enum class instruction_t { JUMP, DECLARATION, LABEL, INSTRUCTION };
 enum class element_t { NUM, LEA, MEM };
 
-namespace {
-constexpr bool is_id_sign_incorrect(char ch) {
-    return !((ch >= '0' && ch <= '9')
-            || (ch >= 'A' && ch <= 'Z')
-            || (ch >= 'a' && ch <= 'z'));
-}
+namespace TMPAsm {
+    constexpr bool is_id_sign_incorrect(char ch) {
+        return !((ch >= '0' && ch <= '9')
+                || (ch >= 'A' && ch <= 'Z')
+                || (ch >= 'a' && ch <= 'z'));
+    }
 }
 
 constexpr num_id_t Id(const char *id) {
     num_id_t num_id = 0ULL;
-    size_t i = 0;
+    size_t i = 1;
 
-    if (id[0] == '\0' || is_id_sign_incorrect(id[0]))
+    if (id[0] == '\0' || TMPAsm::is_id_sign_incorrect(id[0]))
         throw std::exception();
 
     while (id[i] != '\0') {
-        if (is_id_sign_incorrect(id[i]))
+        if (TMPAsm::is_id_sign_incorrect(id[i]))
             throw std::exception();
 
         num_id += ((num_id_t) (unsigned char) (id[i] >= 'a' ? id[i] - ('a' - 'A') : id[i]))
                     << (8U * i);
         ++i;
 
-        if (i >= 7)
+        if (i >= 7U)
             throw std::exception();
     }
     return num_id;
