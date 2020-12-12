@@ -32,10 +32,7 @@ namespace TMPAsm {
 
 constexpr num_id_t Id(const char *id) {
     num_id_t num_id = 0ULL;
-    size_t i = 1;
-
-    if (id[0] == '\0' || TMPAsm::is_id_sign_incorrect(id[0]))
-        throw std::exception();
+    size_t i = 0;
 
     while (id[i] != '\0') {
         if (TMPAsm::is_id_sign_incorrect(id[i]))
@@ -48,6 +45,10 @@ constexpr num_id_t Id(const char *id) {
         if (i >= 7U)
             throw std::exception();
     }
+
+    if(i == 0)
+        throw std::exception();
+
     return num_id;
 }
 
