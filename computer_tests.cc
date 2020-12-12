@@ -4,7 +4,7 @@
 
 // Operator == dla std::array jest constexpr dopiero od C++20.
 template<class T, std::size_t N>
-constexpr bool compare(std::array<T, N> const& arg1, std::array<T, N> const& arg2) {
+constexpr bool compare(std::array<T, N> const &arg1, std::array<T, N> const &arg2) {
     for (size_t i = 0; i < N; ++i)
         if (arg1[i] != arg2[i]) return false;
     return true;
@@ -27,21 +27,21 @@ constexpr std::array<int, 4> test_empty_res = {0, 0, 0, 0};
 static_assert(compare(test_machine::boot<test_empty>(), test_empty_res));
 
 using test_jumps = Program<
-        Dec<Mem<Num<0>>>,
-        Jz<Id("XD")>,
-        Inc<Mem<Num<0>>>,
-        Jz<Id("XD")>,
-        Inc<Mem<Num<1>>>,
-        Label<Id("xd")>
+    Dec<Mem<Num<0>>>,
+    Jz<Id("XD")>,
+    Inc<Mem<Num<0>>>,
+    Jz<Id("XD")>,
+    Inc<Mem<Num<1>>>,
+    Label<Id("xd")>
 >;
 constexpr std::array<int, 4> test_jumps_res = {0, 0, 0, 0};
 static_assert(compare(test_machine::boot<test_jumps>(), test_jumps_res));
 
 using test_declarations = Program<
-        D<Id("a"), Num<-3>>,
-        D<Id("b"), Num<-2>>,
-        D<Id("c"), Num<-1>>,
-        D<Id("a"), Num<-1>>
+    D<Id("a"), Num<-3>>,
+    D<Id("b"), Num<-2>>,
+    D<Id("c"), Num<-1>>,
+    D<Id("a"), Num<-1>>
 >;
 constexpr std::array<int, 4> test_declarations_res = {-3, -2, -1, -1};
 static_assert(compare(test_machine::boot<test_declarations>(), test_declarations_res));
@@ -49,46 +49,46 @@ static_assert(compare(test_machine::boot<test_declarations>(), test_declarations
 
 // tests that should compile AND ofc not result in infinite loop:
 using test_id1 = Program<
-        D<Id("a"), Num<1>>,
-        Label<Id("a")>,
-        Dec<Mem<Num<0>>>,
-        Js<Id("end")>,
-        Label<Id("A")>,
-        Jz<Id("A")>,
-        Label<Id("loop")>,
-        Jmp<Id("loop")>,
-        Label<Id("end")>
-        >;
+    D<Id("a"), Num<1>>,
+    Label<Id("a")>,
+    Dec<Mem<Num<0>>>,
+    Js<Id("end")>,
+    Label<Id("A")>,
+    Jz<Id("A")>,
+    Label<Id("loop")>,
+    Jmp<Id("loop")>,
+    Label<Id("end")>
+>;
 constexpr auto test_id1_res = test_machine::boot<test_id1>();
 
 using test_overflow = Program<
-        D<Id("sth"), Num<2147483560>>,
-        Label<Id("begin")>,
-        Inc<Mem<Num<0>>>,
-        Js<Id("end")>,
-        Jmp<Id("begin")>,
-        Label<Id("end")>>;
+    D<Id("sth"), Num<2147483560>>,
+    Label<Id("begin")>,
+    Inc<Mem<Num<0>>>,
+    Js<Id("end")>,
+    Jmp<Id("begin")>,
+    Label<Id("end")>>;
 //constexpr auto test_overflow_res = test_machine::boot<test_overflow>();
 
 using test_underflow = Program<
-        D<Id("mem0"), Num<INT32_MIN>>,
-        Add<Mem<Lea<Id("MEM0")>>, Num<-1>>>;
+    D<Id("mem0"), Num<INT32_MIN>>,
+    Add<Mem<Lea<Id("MEM0")>>, Num<-1>>>;
 constexpr std::array<int, 4> test_underflow_res = {INT32_MAX, 0, 0, 0};
 //static_assert(compare(test_machine::boot<test_underflow>(), test_underflow_res));
 
 using test_finite_loop1 = Program<
-        Label<Id("loop")>,
-        Dec<Mem<Lea<Id("MEM0")>>>,
-        Js<Id("LOOP")>,
-        D<Id("mem0"), Num<INT32_MIN + 100>>
+    Label<Id("loop")>,
+    Dec<Mem<Lea<Id("MEM0")>>>,
+    Js<Id("LOOP")>,
+    D<Id("mem0"), Num<INT32_MIN + 100>>
 >;
 //constexpr auto test_finite_loop1_res = test_machine::boot<test_finite_loop1>();
 
 using test_finite_loop2 = Program<
-        Label<Id("loop")>,
-        Dec<Mem<Lea<Id("MEM0")>>>,
-        Js<Id("LOOP")>,
-        D<Id("mem0"), Num<10000>>
+    Label<Id("loop")>,
+    Dec<Mem<Lea<Id("MEM0")>>>,
+    Js<Id("LOOP")>,
+    D<Id("mem0"), Num<10000>>
 >;
 constexpr auto test_finite_loop2_res = test_machine::boot<test_finite_loop2>();
 
@@ -110,49 +110,49 @@ constexpr auto test_finite_loop2_res = test_machine::boot<test_finite_loop2>();
  * (if they don't even compile then it's good either way) */
 
 using test_infinite_loop = Program<
-        Label<Id("loop")>,
-        Jmp<Id("LOOP")>>;
+    Label<Id("loop")>,
+    Jmp<Id("LOOP")>>;
 //constexpr auto test_infinite_loop_res = test_machine::boot<test_infinite_loop>();
 
 using test_bad_program = Num<4>;
 //constexpr auto bad_program = test_machine::boot<test_bad_program>();
 
 using test_size1 = Program<
-        Mov<Mem<Num<2137>>, Num<1>>>;
+    Mov<Mem<Num<2137>>, Num<1>>>;
 //constexpr auto test_size1_res = test_machine::boot<test_size1>();
 
 using test_syntax1 = Program<
-        Num<0>>;
+    Num<0>>;
 //constexpr auto test_syntax1_res = test_machine::boot<test_syntax1>();
 
 using test_syntax2 = Program<
-        Lea<Id("a")>>;
+    Lea<Id("a")>>;
 //constexpr auto test_syntax2_res = test_machine::boot<test_syntax2>();
 
 using test_syntax3 = Program<
-        Mem<Num<0>>>;
+    Mem<Num<0>>>;
 //constexpr auto test_syntax3_res = test_machine::boot<test_syntax3>();
 
 using test_syntax4 = Program<
-        Inc<Num<0>>>;
+    Inc<Num<0>>>;
 //constexpr auto test_syntax4_res = test_machine::boot<test_syntax4>();
 
 using test_syntax5 = Program<
-        Inc<Inc<Num<0>>>>;
+    Inc<Inc<Num<0>>>>;
 //constexpr auto test_syntax5_res = test_machine::boot<test_syntax5>();
 
 // I can't make this test fail, yet I believe it should.
 using test_syntax6 = Program<
-        Label<4ULL>>;
+    Label<4ULL>>;
 //constexpr auto test_syntax6_res = test_machine::boot<test_syntax6>();
 
 using test_D_syntax1 = Program<
-        D<Id("a"), Mem<Num<1>>>>;
+    D<Id("a"), Mem<Num<1>>>>;
 //constexpr auto test_D_syntax1_res = test_machine::boot<test_D_syntax1>();
 
 using test_D_syntax2 = Program<
-        D<Id("1"), Num<1>>,
-        D<Id("a"), Lea<Id("1")>>>;
+    D<Id("1"), Num<1>>,
+    D<Id("a"), Lea<Id("1")>>>;
 //constexpr auto test_D_syntax2_res = test_machine::boot<test_D_syntax1>();
 
 // Basic tests for And, Not, Or, Cmp. ~ab
@@ -160,28 +160,30 @@ using test_D_syntax2 = Program<
 // AND
 
 using test_results_logical_and = Program<
-        D<Id("first"), Num<5>>,
-        D<Id("second"), Num<15>>,
-        D<Id("third"), Num<13>>,
-        D<Id("fourth"), Num<6>>,
-        And<Mem<Lea<Id("first")>>, Num<3>>,
-        And<Mem<Lea<Id("second")>>, Lea<Id("fourth")>>,
-        And<Mem<Lea<Id("third")>>, Mem<Lea<Id("fourth")>>>>;
+    D<Id("first"), Num<5>>,
+    D<Id("second"), Num<15>>,
+    D<Id("third"), Num<13>>,
+    D<Id("fourth"), Num<6>>,
+    And<Mem<Lea<Id("first")>>, Num<3>>,
+    And<Mem<Lea<Id("second")>>, Lea<Id("fourth")>>,
+    And<Mem<Lea<Id("third")>>, Mem<Lea<Id("fourth")>>>>;
 constexpr std::array<int, 4> test_log_and_res = {1, 3, 4, 6};
-static_assert(compare(test_machine::boot<test_results_logical_and>(), test_log_and_res));
+static_assert(compare(test_machine::boot<test_results_logical_and>(),
+                      test_log_and_res));
 
 // Assumes working conditional jump.
 using test_flag_logical_and = Program<
-        D<Id("first"), Num<10>>,
-        D<Id("second"), Num<2>>,
-        And<Mem<Lea<Id("first")>>, Num<8>>,
-        Jz<Id("jp3")>,
-        And<Mem<Lea<Id("second")>>, Num<8>>,
-        Jz<Id("jp3")>,
-        Inc<Mem<Num<2>>>,
-        Label<Id("jp3")>>;
+    D<Id("first"), Num<10>>,
+    D<Id("second"), Num<2>>,
+    And<Mem<Lea<Id("first")>>, Num<8>>,
+    Jz<Id("jp3")>,
+    And<Mem<Lea<Id("second")>>, Num<8>>,
+    Jz<Id("jp3")>,
+    Inc<Mem<Num<2>>>,
+    Label<Id("jp3")>>;
 constexpr std::array<int, 4> test_log_and_flag_res = {8, 0, 0, 0};
-static_assert(compare(test_machine::boot<test_flag_logical_and>(), test_log_and_flag_res));
+static_assert(compare(test_machine::boot<test_flag_logical_and>(),
+                      test_log_and_flag_res));
 
 // OR
 
@@ -207,7 +209,8 @@ using test_flag_logical_or = Program<
     Inc<Mem<Num<2>>>,
     Label<Id("jp3")>>;
 constexpr std::array<int, 4> test_log_or_flag_res = {10, 0, 0, 0};
-static_assert(compare(test_machine::boot<test_flag_logical_or>(), test_log_or_flag_res));
+static_assert(compare(test_machine::boot<test_flag_logical_or>(),
+                      test_log_or_flag_res));
 
 // NOT
 
@@ -219,7 +222,8 @@ using test_results_logical_not = Program<
     Not<Mem<Lea<Id("second")>>>,
     Not<Mem<Lea<Id("third")>>>>;
 constexpr std::array<int, 4> test_log_not_res = {-11, 9, -1, 0};
-static_assert(compare(test_machine::boot<test_results_logical_not>(), test_log_not_res));
+static_assert(compare(test_machine::boot<test_results_logical_not>(),
+                      test_log_not_res));
 
 // Assumes working conditional jump.
 using test_flag_logical_not = Program<
@@ -232,7 +236,8 @@ using test_flag_logical_not = Program<
     Inc<Mem<Num<2>>>,
     Label<Id("jp3")>>;
 constexpr std::array<int, 4> test_log_not_flag_res = {-11, 0, 0, 0};
-static_assert(compare(test_machine::boot<test_flag_logical_not>(), test_log_not_flag_res));
+static_assert(compare(test_machine::boot<test_flag_logical_not>(),
+                      test_log_not_flag_res));
 
 // CMP
 // Only one test, since CMP only sets flags.
