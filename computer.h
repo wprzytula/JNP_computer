@@ -32,22 +32,24 @@ namespace TMPAsm {
 
 constexpr num_id_t Id(const char *id) {
     num_id_t num_id = 0ULL;
-    size_t i = 1;
-
-    if (id[0] == '\0' || TMPAsm::is_id_sign_incorrect(id[0]))
-        throw std::exception();
+    size_t i = 0;
 
     while (id[i] != '\0') {
         if (TMPAsm::is_id_sign_incorrect(id[i]))
             throw std::exception();
 
-        num_id += ((num_id_t) (unsigned char) (id[i] >= 'a' ? id[i] - ('a' - 'A') : id[i]))
-                    << (8U * i);
+        num_id +=
+            ((num_id_t) (unsigned char) (id[i] >= 'a' ? id[i] - ('a' - 'A') : id[i]))
+                << (8U * i);
         ++i;
 
         if (i >= 7U)
             throw std::exception();
     }
+
+    if (i == 0)
+        throw std::exception();
+
     return num_id;
 }
 
