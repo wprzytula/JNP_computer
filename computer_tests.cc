@@ -241,6 +241,14 @@ static_assert(compare(test_machine::boot<test_flag_logical_not>(),
 
 // CMP
 // Only one test, since CMP only sets flags.
+//using test_bad_id1 = Program<
+//        Label<Id("%")>>;
+
+//using test_bad_id2 = Program<
+//        Label<Id("3324234")>>;
+
+//using test_bad_syntax1 = Program<
+//        Inc<Lea<Lea<Id("a")>>>>;
 
 using test_compare = Program<
     D<Id("first"), Num<10>>,
@@ -275,6 +283,34 @@ using test_compare = Program<
     Label<Id("42")>>;
 constexpr std::array<int, 4> test_compare_res = {10, 1, 1, 1};
 static_assert(compare(test_machine::boot<test_compare>(), test_compare_res));
+
+// Other tests
+using tests_correct_ids = Program<
+    Label<Id("a")>,
+    Label<Id("AA")>,
+    Label<Id("aAzZkE")>,
+    Label<Id("0")>,
+    Label<Id("213742")>,
+    Label<Id("42")>,
+    Label<Id("a1H55m")>>;
+
+// These should not work:
+
+//using tests_incorrect_id_1 = Program<Label<Id("aaaaaaa")>>;
+//using tests_incorrect_id_2 = Program<Label<Id("1111111")>>;
+//using tests_incorrect_id_3 = Program<Label<Id("pioter zmienilem sie w id, tekst dolny")>>;
+//using tests_incorrect_id_4 = Program<Label<Id("")>>;
+//using tests_incorrect_id_5 = Program<Label<Id("-*/=-?")>>;
+//using tests_incorrect_id_6 = Program<Label<Id(";<>.,")>>;
+//using tests_incorrect_id_7 = Program<Label<Id(" ")>>;
+//using tests_incorrect_id_8 = Program<Label<Id("pa paj")>>;
+
+//using tests_incorrect_num = Program<D<Id("n"), Num<"21">>>;
+
+// Should work, but it's a side effect
+using tests_corr_lea = Program<Lea<1488>>;
+
+
 
 int main() {
 //
