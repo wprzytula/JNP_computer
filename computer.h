@@ -1,14 +1,3 @@
-/*
- * Pytania do Peczara:
- * 1) czy opakować funkcje i typy pomocnicze w jakiś namespace?
- * 2) czy zwykłe asercje będą okej?
- * 3) co z overflowami?
- * 4) czy enumy są okej?
- * 5) ogólna ocena jakości kodu?
- *
- * */
-
-
 #ifndef INC_4_COMPUTER_H
 #define INC_4_COMPUTER_H
 
@@ -17,7 +6,7 @@
 #include <cassert>
 #include <type_traits>
 #include <limits>
-
+#include <exception>
 
 using num_id_t = unsigned long long;
 
@@ -37,13 +26,16 @@ enum element_t {NUM, LEA, MEM};
 constexpr num_id_t Id(const char* id) {
     num_id_t num_id = 0ULL;
     unsigned i = 0;
-    assert(id[0] != '\0' && ((id[0] >= '0' && id[0] <= '9') ||
-           (id[0] >= 'A' && id[0] <= 'Z') || (id[0] >= 'a' && id[0] <= 'z')));
+    if (id[0] == '\0' || ((id[0] <= '0' || id[0] >= '9')
+                            && (id[0] <= 'A' || id[0] >= 'Z')
+                            && (id[0] <= 'a' || id[0] >= 'z')))
+      throw std::exception();
     while (id[i] != '\0') {
         num_id += ((num_id_t) (unsigned char) (id[i] >= 'a' ? id[i] - ('a' - 'A') : id[i]))
                 << (8U * i);
         ++i;
-        assert(i < 7);
+        if(i >= 7)
+          throw std::exception();
     }
     return num_id;
 }
@@ -79,7 +71,7 @@ struct Lea {
             if (vars[i] == num_id)
                 return i;
         }
-        assert(false);
+        throw std::exception();
     }
 };
 
@@ -102,7 +94,7 @@ struct D : Instruction {
             }
             ++i;
         }
-        assert(false);
+        throw std::exception();
     }
 };
 
@@ -239,7 +231,7 @@ struct Program <> {
     template <size_t n, typename T, typename P>
     static constexpr void jump(vars_t<n>&, memory_t<n, T>&,
                                bool&, bool&) {
-        assert(false);
+        throw std::exception();
     }
 };
 
