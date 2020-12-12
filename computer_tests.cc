@@ -155,7 +155,121 @@ using test_D_syntax2 = Program<
         D<Id("a"), Lea<Id("1")>>>;
 //constexpr auto test_D_syntax2_res = test_machine::boot<test_D_syntax1>();
 
+// Basic tests for And, Not, Or, Cmp. ~ab
 
+// AND
+
+using test_results_logical_and = Program<
+        D<Id("first"), Num<5>>,
+        D<Id("second"), Num<15>>,
+        D<Id("third"), Num<13>>,
+        D<Id("fourth"), Num<6>>,
+        And<Mem<Lea<Id("first")>>, Num<3>>,
+        And<Mem<Lea<Id("second")>>, Lea<Id("fourth")>>,
+        And<Mem<Lea<Id("third")>>, Mem<Lea<Id("fourth")>>>>;
+constexpr std::array<int, 4> test_log_and_res = {1, 3, 4, 6};
+static_assert(compare(test_machine::boot<test_results_logical_and>(), test_log_and_res));
+
+// Assumes working conditional jump.
+using test_flag_logical_and = Program<
+        D<Id("first"), Num<10>>,
+        D<Id("second"), Num<2>>,
+        And<Mem<Lea<Id("first")>>, Num<8>>,
+        Jz<Id("jp3")>,
+        And<Mem<Lea<Id("second")>>, Num<8>>,
+        Jz<Id("jp3")>,
+        Inc<Mem<Num<2>>>,
+        Label<Id("jp3")>>;
+constexpr std::array<int, 4> test_log_and_flag_res = {8, 0, 0, 0};
+static_assert(compare(test_machine::boot<test_flag_logical_and>(), test_log_and_flag_res));
+
+// OR
+
+using test_results_logical_or = Program<
+    D<Id("first"), Num<5>>,
+    D<Id("second"), Num<10>>,
+    D<Id("third"), Num<13>>,
+    D<Id("fourth"), Num<6>>,
+    Or<Mem<Lea<Id("first")>>, Num<3>>,
+    Or<Mem<Lea<Id("second")>>, Lea<Id("fourth")>>,
+    Or<Mem<Lea<Id("third")>>, Mem<Lea<Id("fourth")>>>>;
+constexpr std::array<int, 4> test_log_or_res = {7, 11, 15, 6};
+static_assert(compare(test_machine::boot<test_results_logical_or>(), test_log_or_res));
+
+// Assumes working conditional jump.
+using test_flag_logical_or = Program<
+    D<Id("first"), Num<10>>,
+    D<Id("second"), Num<0>>,
+    Or<Mem<Lea<Id("first")>>, Num<8>>,
+    Jz<Id("jp3")>,
+    Or<Mem<Lea<Id("second")>>, Num<0>>,
+    Jz<Id("jp3")>,
+    Inc<Mem<Num<2>>>,
+    Label<Id("jp3")>>;
+constexpr std::array<int, 4> test_log_or_flag_res = {10, 0, 0, 0};
+static_assert(compare(test_machine::boot<test_flag_logical_or>(), test_log_or_flag_res));
+
+// NOT
+
+using test_results_logical_not = Program<
+    D<Id("first"), Num<10>>,
+    D<Id("second"), Num<-10>>,
+    D<Id("third"), Num<0>>,
+    Not<Mem<Lea<Id("first")>>>,
+    Not<Mem<Lea<Id("second")>>>,
+    Not<Mem<Lea<Id("third")>>>>;
+constexpr std::array<int, 4> test_log_not_res = {-11, 9, -1, 0};
+static_assert(compare(test_machine::boot<test_results_logical_not>(), test_log_not_res));
+
+// Assumes working conditional jump.
+using test_flag_logical_not = Program<
+    D<Id("first"), Num<10>>,
+    D<Id("second"), Num<-1>>,
+    Not<Mem<Lea<Id("first")>>>,
+    Jz<Id("jp3")>,
+    Not<Mem<Lea<Id("second")>>>,
+    Jz<Id("jp3")>,
+    Inc<Mem<Num<2>>>,
+    Label<Id("jp3")>>;
+constexpr std::array<int, 4> test_log_not_flag_res = {-11, 0, 0, 0};
+static_assert(compare(test_machine::boot<test_flag_logical_not>(), test_log_not_flag_res));
+
+// CMP
+// Only one test, since CMP only sets flags.
+
+using test_compare = Program<
+    D<Id("first"), Num<10>>,
+    D<Id("second"), Num<1>>,
+    D<Id("third"), Num<0>>,
+    Cmp<Mem<Lea<Id("first")>>, Mem<Lea<Id("second")>>>,
+    Cmp<Mem<Lea<Id("first")>>, Lea<Id("second")>>,
+    Cmp<Mem<Lea<Id("first")>>, Num<5>>,
+    Cmp<Lea<Id("third")>, Mem<Lea<Id("second")>>>,
+    Cmp<Lea<Id("third")>, Lea<Id("second")>>,
+    Cmp<Lea<Id("third")>, Num<0>>,
+    Cmp<Num<42>, Mem<Lea<Id("second")>>>,
+    Cmp<Num<42>, Lea<Id("second")>>,
+    Cmp<Num<42>, Num<5>>,
+    // Should not jump
+    Jz<Id("42")>,
+    Js<Id("42")>,
+    Inc<Mem<Lea<Id("third")>>>,
+    Cmp<Num<10>, Num<10>>,
+    // Should jump only on Jz, to label "21"
+    Js<Id("42")>,
+    Jz<Id("21")>,
+    Inc<Mem<Lea<Id("third")>>>,
+    Label<Id("21")>,
+    Cmp<Num<5>, Num<10>>,
+    // Should jump only on Js, to label "37"
+    Jz<Id("42")>,
+    Js<Id("37")>,
+    Inc<Mem<Lea<Id("third")>>>,
+    Label<Id("37")>,
+    Inc<Mem<Num<3>>>,
+    Label<Id("42")>>;
+constexpr std::array<int, 4> test_compare_res = {10, 1, 1, 1};
+static_assert(compare(test_machine::boot<test_compare>(), test_compare_res));
 
 int main() {
 //

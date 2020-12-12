@@ -149,47 +149,47 @@ template <typename LValue>
 using Dec = Sub<LValue, Num<1>>;
 
 template <typename RValue1, typename RValue2>
-struct Cmp {
-    static constexpr instruction_t type = INSTRUCTION;
-    template <size_t n, typename T>
-    static constexpr void execute(vars_t<n> vars, memory_t<n, T>& memory, bool& ZF, bool& SF) {
-        auto result = RValue1::template rval<n, T>(vars, memory) -
-                      RValue2::template rval<n, T>(vars, memory);
-        ZF = result == 0;
-        SF = result < 0;
-    }
+struct Cmp : Instruction {
+  static constexpr instruction_t ins_type = INSTRUCTION;
+  template <size_t n, typename T>
+  static constexpr void execute(vars_t<n> vars, memory_t<n, T>& memory, bool& ZF, bool& SF) {
+    auto result = RValue1::template rval<n, T>(vars, memory) -
+        RValue2::template rval<n, T>(vars, memory);
+    ZF = (result == 0);
+    SF = (result < 0);
+  }
 };
 
 template <typename LValue, typename RValue>
-struct And {
-    static constexpr instruction_t type = INSTRUCTION;
+struct And : Instruction {
+    static constexpr instruction_t ins_type = INSTRUCTION;
     template <size_t n, typename T>
     static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool&) {
         auto result = (*LValue::template addr<n, T>(vars, memory) &=
                 RValue::template rval<n, T>(vars, memory));
-        ZF = result == 0;
+        ZF = (result == 0);
     }
 };
 
 template <typename LValue, typename RValue>
-struct Or {
-    static constexpr instruction_t type = INSTRUCTION;
+struct Or : Instruction {
+    static constexpr instruction_t ins_type = INSTRUCTION;
     template <size_t n, typename T>
     static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool&) {
         auto result = (*LValue::template addr<n, T>(vars, memory) |=
                 RValue::template rval<n, T>(vars, memory));
-        ZF = result == 0;
+        ZF = (result == 0);
     }
 };
 
 template <typename LValue>
-struct Not {
-    static constexpr instruction_t type = INSTRUCTION;
+struct Not : Instruction {
+    static constexpr instruction_t ins_type = INSTRUCTION;
     template <size_t n, typename T>
     static constexpr void execute(vars_t<n>& vars, memory_t <n, T>& memory, bool& ZF, bool&) {
         auto result = (*LValue::template addr<n, T>(vars, memory) =
                 ~(*LValue::template addr<n, T>(vars, memory)));
-        ZF = result == 0;
+        ZF = (result == 0);
     }
 };
 
@@ -203,7 +203,6 @@ template <num_id_t L>
 struct Jmp : Instruction {
     static constexpr instruction_t ins_type = JUMP;
     static constexpr num_id_t label = L;
-    template <size_t n, typename T>
     static constexpr bool should_jump(const bool&, const bool&) {
         return true;
     }
@@ -213,7 +212,6 @@ template <num_id_t L>
 struct Js : Instruction {
     static constexpr instruction_t ins_type = JUMP;
     static constexpr num_id_t label = L;
-    template <size_t n, typename T>
     static constexpr bool should_jump(const bool&, const bool& SF) {
         return SF;
     }
@@ -223,7 +221,6 @@ template <num_id_t L>
 struct Jz : Instruction {
     static constexpr instruction_t ins_type = JUMP;
     static constexpr num_id_t label = L;
-    template <size_t n, typename T>
     static constexpr bool should_jump(const bool& ZF, const bool&) {
         return ZF;
     }
@@ -261,7 +258,7 @@ struct Program <Line, rest...> {
     static constexpr void run(vars_t<n>& vars,
             memory_t<n, T>& memory, bool& ZF, bool& SF) {
         if constexpr (Line::ins_type == JUMP) {
-            if (Line::template should_jump<n, T>(ZF, SF))
+            if (Line::should_jump(ZF, SF))
                 P::template jump<n, T, P, Line::label>(vars, memory, ZF, SF);
             else
                 Program<rest...>::template run<n, T, P>(vars, memory, ZF, SF);
