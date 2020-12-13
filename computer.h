@@ -53,30 +53,31 @@ constexpr num_id_t Id(const char *id) {
     return num_id;
 }
 
+struct RValue {};
+struct LValue : RValue {};
+
 template<auto num>
-struct Num {
+struct Num : RValue {
   static constexpr element_t el_type = element_t::NUM;
 
   template<size_t n, typename T>
-  static constexpr auto rval(const vars_t<n> &, const memory_t<n, T> &) {
+  static constexpr auto value(const vars_t<n> &, const memory_t<n, T> &) {
       return T(num);
   }
 };
 
-struct MemAccess {};
-
 template<typename Addr>
-struct Mem : MemAccess {
+struct Mem : LValue {
   static constexpr element_t el_type = element_t::MEM;
 
   template<size_t n, typename T>
-  static constexpr auto *addr(vars_t<n> vars, memory_t<n, T> &memory) {
-      return &memory[Addr::template rval<n, T>(vars, memory)];
+  static constexpr auto *address(vars_t<n> vars, memory_t<n, T> &memory) {
+      return &memory[Addr::template value<n, T>(vars, memory)];
   }
 
   template<size_t n, typename T>
-  static constexpr auto rval(vars_t<n> vars, const memory_t<n, T> &memory) {
-      return memory[Addr::template rval<n, T>(vars, memory)];
+  static constexpr auto value(vars_t<n> vars, const memory_t<n, T> &memory) {
+      return memory[Addr::template value<n, T>(vars, memory)];
   }
 };
 
@@ -85,7 +86,7 @@ struct Lea {
   static constexpr element_t el_type = element_t::LEA;
 
   template<size_t n, typename T>
-  static constexpr size_t rval(const vars_t<n> &vars, const memory_t<n, T> &) {
+  static constexpr size_t value(const vars_t<n> &vars, const memory_t<n, T> &) {
       for (size_t i = 0; i < n; ++i) {
           if (vars[i] == num_id)
               return i;
@@ -111,7 +112,7 @@ struct D : Instruction {
       while (i < n) {
           if (vars[i] == 0) {
               vars[i] = id;
-              memory[i] = Value::rval(vars, memory);
+              memory[i] = Value::value(vars, memory);
               return;
           }
           ++i;
@@ -123,31 +124,31 @@ struct D : Instruction {
 template<typename LValue, typename RValue>
 struct Mov : Instruction {
   static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
-    static_assert(std::is_base_of<MemAccess, LValue>::value);
+    static_assert(std::is_base_of<LValue, LValue>::value);
 
   template<size_t n, typename T>
   static constexpr void execute(vars_t<n> &vars,
                                 memory_t<n, T> &memory,
                                 bool &,
                                 bool &) {
-      *LValue::template addr<n, T>(vars, memory) =
-          RValue::template rval<n, T>(vars, memory);
+      *LValue::template address<n, T>(vars, memory) =
+          RValue::template value<n, T>(vars, memory);
   }
 };
 
 template<typename LValue, typename RValue>
 struct Add : Instruction {
   static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
-    static_assert(std::is_base_of<MemAccess, LValue>::value);
+    static_assert(std::is_base_of<LValue, LValue>::value);
 
   template<size_t n, typename T>
   static constexpr void execute(vars_t<n> &vars,
                                 memory_t<n, T> &memory,
                                 bool &ZF,
                                 bool &SF) {
-      T *lval = LValue::template addr<n, T>(vars, memory);
-      T rval = RValue::template rval<n, T>(vars, memory);
-      T result = (*lval += rval);
+      T *lval = LValue::template address<n, T>(vars, memory);
+      T value = RValue::template value<n, T>(vars, memory);
+      T result = (*lval += value);
       ZF = (result == (T) 0);
       SF = (result < (T) 0);
   }
@@ -156,15 +157,15 @@ struct Add : Instruction {
 template<typename LValue, typename RValue>
 struct Sub : Instruction {
   static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
-    static_assert(std::is_base_of<MemAccess, LValue>::value);
+    static_assert(std::is_base_of<LValue, LValue>::value);
 
   template<size_t n, typename T>
   static constexpr void execute(vars_t<n> vars,
                                 memory_t<n, T> &memory,
                                 bool &ZF,
                                 bool &SF) {
-      T *lval = LValue::template addr<n, T>(vars, memory);
-      T rval = RValue::template rval<n, T>(vars, memory);
+      T *lval = LValue::template address<n, T>(vars, memory);
+      T rval = RValue::template value<n, T>(vars, memory);
       T result = (*lval -= rval);
       ZF = (result == (T) 0);
       SF = (result < (T) 0);
@@ -186,8 +187,8 @@ struct Cmp : Instruction {
                                 memory_t<n, T> &memory,
                                 bool &ZF,
                                 bool &SF) {
-      auto result = RValue1::template rval<n, T>(vars, memory) -
-          RValue2::template rval<n, T>(vars, memory);
+      auto result = RValue1::template value<n, T>(vars, memory) -
+          RValue2::template value<n, T>(vars, memory);
       ZF = (result == (T) 0);
       SF = (result < (T) 0);
   }
@@ -195,7 +196,7 @@ struct Cmp : Instruction {
 
 template<typename LValue, typename RValue>
 struct And : Instruction {
-    static_assert(std::is_base_of<MemAccess, LValue>::value);
+    static_assert(std::is_base_of<LValue, LValue>::value);
   static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
 
 
@@ -204,15 +205,15 @@ struct And : Instruction {
                                 memory_t<n, T> &memory,
                                 bool &ZF,
                                 bool &) {
-      auto result = (*LValue::template addr<n, T>(vars, memory) &=
-                         RValue::template rval<n, T>(vars, memory));
+      auto result = (*LValue::template address<n, T>(vars, memory) &=
+                         RValue::template value<n, T>(vars, memory));
       ZF = (result == (T) 0);
   }
 };
 
 template<typename LValue, typename RValue>
 struct Or : Instruction {
-    static_assert(std::is_base_of<MemAccess, LValue>::value);
+    static_assert(std::is_base_of<LValue, LValue>::value);
   static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
 
   template<size_t n, typename T>
@@ -220,15 +221,15 @@ struct Or : Instruction {
                                 memory_t<n, T> &memory,
                                 bool &ZF,
                                 bool &) {
-      auto result = (*LValue::template addr<n, T>(vars, memory) |=
-                         RValue::template rval<n, T>(vars, memory));
+      auto result = (*LValue::template address<n, T>(vars, memory) |=
+                         RValue::template value<n, T>(vars, memory));
       ZF = (result == (T) 0);
   }
 };
 
 template<typename LValue>
 struct Not : Instruction {
-    static_assert(std::is_base_of<MemAccess, LValue>::value);
+    static_assert(std::is_base_of<LValue, LValue>::value);
   static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
 
   template<size_t n, typename T>
@@ -236,8 +237,8 @@ struct Not : Instruction {
                                 memory_t<n, T> &memory,
                                 bool &ZF,
                                 bool &) {
-      auto result = (*LValue::template addr<n, T>(vars, memory) =
-                         ~(*LValue::template addr<n, T>(vars, memory)));
+      auto result = (*LValue::template address<n, T>(vars, memory) =
+                         ~(*LValue::template address<n, T>(vars, memory)));
       ZF = (result == (T) 0);
   }
 };
