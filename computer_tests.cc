@@ -44,7 +44,7 @@ using test_declarations = Program<
     D<Id("a"), Num<-1>>
 >;
 constexpr std::array<int, 4> test_declarations_res = {-3, -2, -1, -1};
-static_assert(compare(test_machine::boot<test_declarations>(), test_declarations_res));
+//static_assert(compare(test_machine::boot<test_declarations>(), test_declarations_res));
 
 
 // tests that should compile AND ofc not result in infinite loop:
@@ -147,7 +147,7 @@ using test_syntax3 = Program<
 //constexpr auto test_syntax3_res = test_machine::boot<test_syntax3>();
 
 using test_syntax4 = Program<
-    Inc<Num<0>>>;
+    Inc<Num<5>>>;
 //constexpr auto test_syntax4_res = test_machine::boot<test_syntax4>();
 
 using test_syntax5 = Program<
@@ -158,6 +158,9 @@ using test_syntax5 = Program<
 using test_syntax6 = Program<
     Label<4ULL>>;
 //constexpr auto test_syntax6_res = test_machine::boot<test_syntax6>();
+
+using test_syntax7 = Program<
+        D<3, Lea<3>>>;
 
 using test_D_syntax1 = Program<
     D<Id("a"), Mem<Num<1>>>>;
