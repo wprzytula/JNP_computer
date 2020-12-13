@@ -92,6 +92,19 @@ using test_finite_loop2 = Program<
 >;
 constexpr auto test_finite_loop2_res = test_machine::boot<test_finite_loop2>();
 
+using testfail = Program<
+        Jmp<Id("stop")>,
+        Add<Mem<Num<0>>, Mem<Lea<Id("b")>>>,
+        Label<Id("stop")>
+>;
+
+using testfail2 = Program<
+        Jmp<Id("stop")>,
+        Add<Num<0>, Num<0>>,
+        Label<Id("stop")>>;
+
+constexpr auto testfail_res = test_machine::boot<testfail>();
+constexpr auto testfail2_res = test_machine::boot<testfail2>();
 
 // tests that should not compile (i.e. template parsing error):
 
