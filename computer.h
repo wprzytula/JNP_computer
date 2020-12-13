@@ -124,9 +124,9 @@ struct D : Instruction {
 
 template<typename op1, typename op2>
 struct Mov : Instruction {
-  static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
   static_assert(std::is_base_of<LValue, op1>::value);
   static_assert(std::is_base_of<RValue, op2>::value);
+  static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
 
   template<size_t n, typename T>
   static constexpr void execute(vars_t<n> &vars,
@@ -140,9 +140,9 @@ struct Mov : Instruction {
 
 template<typename op1, typename op2>
 struct Add : Instruction {
-  static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
   static_assert(std::is_base_of<LValue, op1>::value);
   static_assert(std::is_base_of<RValue, op2>::value);
+  static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
 
   template<size_t n, typename T>
   static constexpr void execute(vars_t<n> &vars,
@@ -159,9 +159,9 @@ struct Add : Instruction {
 
 template<typename op1, typename op2>
 struct Sub : Instruction {
-  static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
   static_assert(std::is_base_of<LValue, op1>::value);
   static_assert(std::is_base_of<RValue, op2>::value);
+  static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
 
   template<size_t n, typename T>
   static constexpr void execute(vars_t<n> vars,
@@ -184,9 +184,9 @@ using Dec = Sub<op, Num<1>>;
 
 template<typename op1, typename op2>
 struct Cmp : Instruction {
-  static constexpr instruction_t ins_type = instruction_t::INSTRUCTION;
   static_assert(std::is_base_of<RValue, op1>::value);
   static_assert(std::is_base_of<RValue, op2>::value);
+  static constexpr instruction_t ins_type = instruction_t::INSTRUCTION
 
   template<size_t n, typename T>
   static constexpr void execute(vars_t<n> vars,
